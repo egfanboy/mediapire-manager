@@ -1,6 +1,8 @@
 package app
 
-import "flag"
+import (
+	"flag"
+)
 
 type config struct {
 	Port int
