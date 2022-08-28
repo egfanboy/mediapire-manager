@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"mediapire/manager/internal/app"
+	_ "mediapire/manager/internal/media"
 	_ "mediapire/manager/internal/node"
 
 	"net/http"
