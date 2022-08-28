@@ -7,9 +7,10 @@ import (
 	"net/http"
 
 	"mediapire/manager/internal/app"
-	mediahost "mediapire/manager/internal/integrations/media-host"
 
 	"github.com/egfanboy/mediapire-common/exceptions"
+	"github.com/egfanboy/mediapire-media-host/pkg/api"
+	"github.com/egfanboy/mediapire-media-host/pkg/types"
 	"github.com/go-redis/redis/v9"
 	"github.com/rs/zerolog/log"
 )
@@ -49,15 +50,22 @@ func (s *nodeService) RegisterNode(ctx context.Context, req RegisterNodeRequest)
 		return q.Err()
 	}
 
-	err = mediahost.NewMediaHostIntegration().VerifyConnectivity(req.Scheme, req.Host.String(), port)
+	resp, err := api.NewClient(ctx).GetHealth(types.NewHttpHost(req.Host.String(), *req.Port))
 
 	if err != nil {
 		log.Error().Err(err)
 		err = exceptions.NewBadRequestException(err)
 	}
 
+	if resp != nil && resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("media-host %s returned status code %q instead of 200", req.Host.String(), resp.StatusCode)
+		log.Error().Err(err)
+		err = exceptions.NewBadRequestException(err)
+		return err
+	}
+
 	// add host to the list of hosts
-	q = s.app.Redis.LPush(ctx, keyHostList, req.Host.String())
+	q = s.app.Redis.RPush(ctx, keyHostList, req.Host.String())
 
 	if q.Err() != nil {
 		log.Error().Err(q.Err()).Msg("failed to add host to redis")
