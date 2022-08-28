@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"mediapire/manager/internal/app"
+	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/egfanboy/mediapire-manager/pkg/types"
 
 	"github.com/egfanboy/mediapire-common/exceptions"
 	"github.com/egfanboy/mediapire-media-host/pkg/api"
-	"github.com/egfanboy/mediapire-media-host/pkg/types"
+	mhtypes "github.com/egfanboy/mediapire-media-host/pkg/types"
 	"github.com/go-redis/redis/v9"
 	"github.com/rs/zerolog/log"
 )
@@ -24,14 +25,14 @@ func MakeNodeHash(h string) string {
 }
 
 type nodeApi interface {
-	RegisterNode(ctx context.Context, req RegisterNodeRequest) error
+	RegisterNode(ctx context.Context, req types.RegisterNodeRequest) error
 }
 
 type nodeService struct {
 	app *app.App
 }
 
-func (s *nodeService) RegisterNode(ctx context.Context, req RegisterNodeRequest) (err error) {
+func (s *nodeService) RegisterNode(ctx context.Context, req types.RegisterNodeRequest) (err error) {
 	log.Trace().Msg("RegisterNode start")
 	port := 443
 
@@ -50,7 +51,7 @@ func (s *nodeService) RegisterNode(ctx context.Context, req RegisterNodeRequest)
 		return q.Err()
 	}
 
-	resp, err := api.NewClient(ctx).GetHealth(types.NewHttpHost(req.Host.String(), *req.Port))
+	resp, err := api.NewClient(ctx).GetHealth(mhtypes.NewHttpHost(req.Host.String(), *req.Port))
 
 	if err != nil {
 		log.Error().Err(err)
