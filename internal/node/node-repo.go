@@ -2,8 +2,9 @@ package node
 
 import (
 	"context"
-	"mediapire/manager/internal/app"
-	"mediapire/manager/internal/constants"
+
+	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/egfanboy/mediapire-manager/internal/constants"
 )
 
 type NodeRepo interface {

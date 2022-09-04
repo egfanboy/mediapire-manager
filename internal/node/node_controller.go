@@ -1,8 +1,10 @@
 package node
 
 import (
-	"mediapire/manager/internal/app"
 	"net/http"
+
+	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/egfanboy/mediapire-manager/pkg/types"
 
 	"github.com/egfanboy/mediapire-common/router"
 )
@@ -29,7 +31,7 @@ func (c nodeController) HandleRegister() router.RouteBuilder {
 		SetPath(basePath + "/register").
 		SetReturnCode(http.StatusNoContent).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			req := new(RegisterNodeRequest)
+			req := new(types.RegisterNodeRequest)
 
 			err := p.PopulateBody(req)
 

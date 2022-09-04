@@ -1,8 +1,9 @@
 package media
 
 import (
-	"mediapire/manager/internal/app"
 	"net/http"
+
+	"github.com/egfanboy/mediapire-manager/internal/app"
 
 	"github.com/egfanboy/mediapire-common/router"
 )

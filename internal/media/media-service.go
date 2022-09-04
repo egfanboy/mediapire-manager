@@ -2,7 +2,8 @@ package media
 
 import (
 	"context"
-	"mediapire/manager/internal/node"
+
+	"github.com/egfanboy/mediapire-manager/internal/node"
 
 	"github.com/egfanboy/mediapire-media-host/pkg/api"
 	"github.com/egfanboy/mediapire-media-host/pkg/types"

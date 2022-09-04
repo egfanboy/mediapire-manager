@@ -1,4 +1,4 @@
-module mediapire/manager
+module github.com/egfanboy/mediapire-manager
 
 go 1.16
 

@@ -1,16 +1,8 @@
 package node
 
 import (
-	"net"
 	"strconv"
 )
-
-// todo: validate request
-type RegisterNodeRequest struct {
-	Host   net.IP `json:"host"`
-	Scheme string `json:"scheme"`
-	Port   *int   `json:"port"`
-}
 
 type NodeConfig struct {
 	NodeHost   string `redis:"host"`
