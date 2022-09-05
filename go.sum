@@ -11,10 +11,13 @@ github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cu
 github.com/dhowden/itl v0.0.0-20170329215456-9fbe21093131/go.mod h1:eVWQJVQ67aMvYhpkDwaH2Goy2vo6v8JCMfGXfQ9sPtw=
 github.com/dhowden/plist v0.0.0-20141002110153-5db6e0d9931a/go.mod h1:sLjdR6uwx3L6/Py8F+QgAfeiuY87xuYGwCDqRFrvCzw=
 github.com/dhowden/tag v0.0.0-20220618230019-adf36e896086/go.mod h1:Z3Lomva4pyMWYezjMAU5QWRh0p1VvO4199OHlFnyKkM=
-github.com/egfanboy/mediapire-common v0.0.0-20220828193527-bd4d006a2cb6 h1:/Xu++MnB1xx/Y4dqCFHrK75oLGQaTCN4BhwDMts6VA0=
 github.com/egfanboy/mediapire-common v0.0.0-20220828193527-bd4d006a2cb6/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
-github.com/egfanboy/mediapire-media-host v0.0.0-20220828193959-b4703c0b0de3 h1:STC9d+SyQerbLPcak08efu9sYv6f67QqHgzp4pbyHBw=
+github.com/egfanboy/mediapire-common v0.0.0-20220905143518-e3d4d7ef0bac h1:hoHUNRdWqqwpf49lCTvo9h45ZeJqvO2zmEFhi2pOJnQ=
+github.com/egfanboy/mediapire-common v0.0.0-20220905143518-e3d4d7ef0bac/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
+github.com/egfanboy/mediapire-manager v0.0.0-20220904162026-6b73483348a2/go.mod h1:uTaKJjpn1y9kf2nFcfra5Bc0bjiHzog5WPLRtlELQvU=
 github.com/egfanboy/mediapire-media-host v0.0.0-20220828193959-b4703c0b0de3/go.mod h1:Cww9Y18zSpFx/3C0E+W3itI2CXRleZvpm3C55ciCPh8=
+github.com/egfanboy/mediapire-media-host v0.0.0-20220905144209-41b677b2a6a6 h1:NWem8bLeycdACoqTkyO3osr8DFyLjM48j5RY2TNkVNM=
+github.com/egfanboy/mediapire-media-host v0.0.0-20220905144209-41b677b2a6a6/go.mod h1:WqI1kOfl7BxHxcFY1jSlkoIndLEQn5XnvyOG7h34L6o=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/fsnotify/fsnotify v1.5.4 h1:jRbGcIw6P2Meqdwuo0H1p6JVLbL5DHKAKlYndzMwVZI=
