@@ -8,7 +8,11 @@ import (
 	"github.com/egfanboy/mediapire-common/router"
 )
 
-const basePath = "/media"
+const (
+	basePath           = "/media"
+	queryParamFilePath = "filePath"
+	queryParamNodeId   = "nodeId"
+)
 
 type mediaController struct {
 	builders []func() router.RouteBuilder
@@ -35,10 +39,23 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 		})
 }
 
+func (c mediaController) StreamMedia() router.RouteBuilder {
+	return router.NewV1RouteBuilder().
+		SetMethod(http.MethodOptions, http.MethodGet).
+		SetPath(basePath + "/stream").
+		SetDataType(router.DataTypeFile).
+		SetReturnCode(http.StatusOK).
+		AddQueryParam(router.QueryParam{Name: queryParamFilePath, Required: true}).
+		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: true}).
+		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
+			return c.service.StreamMedia(request.Context(), p.Params[queryParamNodeId], p.Params[queryParamFilePath])
+		})
+}
+
 func initController() mediaController {
 	c := mediaController{service: newMediaService()}
 
-	c.builders = append(c.builders, c.handleGetAll)
+	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia)
 
 	return c
 }
