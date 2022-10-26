@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/egfanboy/mediapire-manager/internal/node"
+	"github.com/rs/zerolog/log"
 
 	"github.com/egfanboy/mediapire-media-host/pkg/api"
 	mhApi "github.com/egfanboy/mediapire-media-host/pkg/api"
@@ -20,10 +21,12 @@ type mediaService struct {
 }
 
 func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]types.MediaItem, err error) {
+	log.Info().Msg("Getting all media from all nodes")
 	result = map[string][]types.MediaItem{}
 
 	nodes, err := s.nodeRepo.GetAllNodes(ctx)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get all nodes")
 		return
 	}
 
@@ -32,6 +35,7 @@ func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]types.
 		items, _, err2 := api.NewClient(ctx).GetMedia(node)
 		if err2 != nil {
 			err = err2
+			log.Error().Err(err).Msgf("Failed to get media from node %s", node.NodeHost)
 			return
 		}
 
@@ -42,9 +46,11 @@ func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]types.
 }
 
 func (s *mediaService) StreamMedia(ctx context.Context, nodeId string, filePath string) ([]byte, error) {
+	log.Info().Msgf("Streaming media %s from node %s", filePath, nodeId)
 	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 
 	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get node with id %s", nodeId)
 		return nil, err
 	}
 
@@ -52,11 +58,21 @@ func (s *mediaService) StreamMedia(ctx context.Context, nodeId string, filePath 
 
 	b, _, err := client.StreamMedia(node, filePath)
 
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed stream media on node %s", nodeId)
+	}
+
 	return b, err
 }
 
-func newMediaService() mediaApi {
-	return &mediaService{
-		node.NewNodeRepo(),
+func newMediaService() (mediaApi, error) {
+	repo, err := node.NewNodeRepo()
+
+	if err != nil {
+		return nil, err
 	}
+
+	return &mediaService{
+		nodeRepo: repo,
+	}, nil
 }

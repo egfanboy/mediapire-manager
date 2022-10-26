@@ -9,14 +9,8 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "cmd"
-    },
-    {
-      "name": "Launch Media Host",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": "cmd"
+      "program": "cmd",
+      "args": ["--config", "${workspaceFolder}/config.yaml"]
     }
   ]
 }

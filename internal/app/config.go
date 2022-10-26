@@ -2,19 +2,47 @@ package app
 
 import (
 	"flag"
+	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type config struct {
-	Port int
+	Port   int    `yaml:"port"`
+	Scheme string `yaml:"scheme"`
+	Consul struct {
+		Scheme  string `yaml:"scheme"`
+		Port    int    `yaml:"port"`
+		Address string `yaml:"address"`
+	} `yaml:"consul"`
 }
 
-func parseConfig() config {
+func parseConfig() (config, error) {
 
-	var cfg config
+	var conf config
 
-	flag.IntVar(&cfg.Port, "port", 9898, "Server port to listen on")
+	var configPath string
+	flag.StringVar(&configPath, "config", "", "optional path to config file")
 
 	flag.Parse()
 
-	return cfg
+	if configPath == "" {
+		cwd, err := os.Getwd()
+
+		if err != nil {
+			return conf, err
+		}
+
+		configPath = cwd + "/config.yaml"
+	}
+
+	f, err := os.ReadFile(configPath)
+
+	if err != nil {
+		return conf, err
+	}
+
+	err = yaml.Unmarshal(f, &conf)
+
+	return conf, err
 }

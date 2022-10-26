@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/rs/zerolog/log"
 
 	"github.com/egfanboy/mediapire-common/router"
 )
@@ -52,14 +53,26 @@ func (c mediaController) StreamMedia() router.RouteBuilder {
 		})
 }
 
-func initController() mediaController {
-	c := mediaController{service: newMediaService()}
+func initController() (mediaController, error) {
+	mediaService, err := newMediaService()
+
+	if err != nil {
+		return mediaController{}, err
+	}
+
+	c := mediaController{service: mediaService}
 
 	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia)
 
-	return c
+	return c, nil
 }
 
 func init() {
-	app.GetApp().ControllerRegistry.Register(initController())
+	controller, err := initController()
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to instantiate media controller")
+	} else {
+		app.GetApp().ControllerRegistry.Register(controller)
+	}
 }

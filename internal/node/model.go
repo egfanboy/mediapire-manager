@@ -5,9 +5,9 @@ import (
 )
 
 type NodeConfig struct {
-	NodeHost   string `redis:"host"`
-	NodePort   string `redis:"port"`
-	NodeScheme string `redis:"scheme"`
+	NodeHost   string `json:"host"`
+	NodePort   string `json:"port"`
+	NodeScheme string `json:"scheme"`
 }
 
 func (c NodeConfig) Host() string {

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
-	"github.com/egfanboy/mediapire-manager/pkg/types"
+	"github.com/rs/zerolog/log"
 
 	"github.com/egfanboy/mediapire-common/router"
 )
@@ -25,33 +25,37 @@ func (c nodeController) GetApis() (routes []router.RouteBuilder) {
 	return
 }
 
-func (c nodeController) HandleRegister() router.RouteBuilder {
+func (c nodeController) getAllNodes() router.RouteBuilder {
 	return router.NewV1RouteBuilder().
-		SetMethod(http.MethodOptions, http.MethodPost).
-		SetPath(basePath + "/register").
-		SetReturnCode(http.StatusNoContent).
+		SetMethod(http.MethodOptions, http.MethodGet).
+		SetPath(basePath).
+		SetReturnCode(http.StatusOK).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			req := new(types.RegisterNodeRequest)
-
-			err := p.PopulateBody(req)
-
-			if err != nil {
-				return nil, err
-			}
-
-			err = c.service.RegisterNode(request.Context(), *req)
-			return nil, err
+			return c.service.GetAllNodes(request.Context())
 		})
 }
 
-func initController() nodeController {
-	c := nodeController{service: newNodeService()}
+func initController() (nodeController, error) {
 
-	c.builders = append(c.builders, c.HandleRegister)
+	nodeService, err := newNodeService()
 
-	return c
+	if err != nil {
+		return nodeController{}, err
+	}
+	c := nodeController{service: nodeService}
+
+	c.builders = append(c.builders, c.getAllNodes)
+
+	return c, nil
 }
 
 func init() {
-	app.GetApp().ControllerRegistry.Register(initController())
+	controller, err := initController()
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to instantiate node controller")
+	} else {
+		app.GetApp().ControllerRegistry.Register(controller)
+	}
+
 }
