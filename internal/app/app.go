@@ -1,17 +1,17 @@
 package app
 
 import (
+	"os"
 	"sync"
 
 	"github.com/egfanboy/mediapire-common/router"
-	"github.com/go-redis/redis/v9"
+
+	"github.com/rs/zerolog/log"
 )
 
 type App struct {
 	ControllerRegistry *router.ControllerRegistry
-	config
-
-	Redis *redis.Client
+	Config             config
 }
 
 var a *App
@@ -22,16 +22,14 @@ func initApp() {
 	o.Do(func() {
 		if a == nil {
 
-			// TODO: add redis info to a config
-			rdb := redis.NewClient(&redis.Options{
-				Addr:     "localhost:6379",
-				Password: "", // no password set
-				DB:       0,  // use default DB
-			})
+			cfg, err := parseConfig()
 
-			cfg := parseConfig()
+			if err != nil {
+				log.Error().Err(err).Msgf("Failed to read app config file.")
+				os.Exit(1)
+			}
 
-			a = &App{ControllerRegistry: router.NewControllerRegistry(), config: cfg, Redis: rdb}
+			a = &App{ControllerRegistry: router.NewControllerRegistry(), Config: cfg}
 		}
 	})
 }

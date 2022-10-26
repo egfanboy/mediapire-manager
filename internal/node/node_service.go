@@ -2,17 +2,9 @@ package node
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
-	"github.com/egfanboy/mediapire-manager/pkg/types"
-
-	"github.com/egfanboy/mediapire-common/exceptions"
-	"github.com/egfanboy/mediapire-media-host/pkg/api"
-	mhtypes "github.com/egfanboy/mediapire-media-host/pkg/types"
-	"github.com/go-redis/redis/v9"
 	"github.com/rs/zerolog/log"
 )
 
@@ -25,71 +17,34 @@ func MakeNodeHash(h string) string {
 }
 
 type nodeApi interface {
-	RegisterNode(ctx context.Context, req types.RegisterNodeRequest) error
+	GetAllNodes(ctx context.Context) ([]NodeConfig, error)
 }
 
 type nodeService struct {
-	app *app.App
+	app  *app.App
+	repo NodeRepo
 }
 
-func (s *nodeService) RegisterNode(ctx context.Context, req types.RegisterNodeRequest) (err error) {
-	log.Trace().Msg("RegisterNode start")
-	port := 443
+func (s *nodeService) GetAllNodes(ctx context.Context) ([]NodeConfig, error) {
+	log.Info().Msg("Getting all registered nodes")
 
-	if req.Port != nil {
-		port = *req.Port
-	}
-
-	q := s.app.Redis.LPos(ctx, keyHostList, req.Host.String(), redis.LPosArgs{})
-
-	// record was found, throw error
-	if q.Err() == nil {
-		return &exceptions.ApiException{Err: errors.New("host already registered"), StatusCode: http.StatusConflict}
-	} else if q.Err() != redis.Nil {
-		// real error, return
-
-		return q.Err()
-	}
-
-	resp, err := api.NewClient(ctx).GetHealth(mhtypes.NewHttpHost(req.Host.String(), *req.Port))
+	nodes, err := s.repo.GetAllNodes(ctx)
 
 	if err != nil {
-		log.Error().Err(err)
-		err = exceptions.NewBadRequestException(err)
+		log.Error().Err(err).Msg("Failed to get all mediahost nodes")
+		return nil, err
 	}
 
-	if resp != nil && resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("media-host %s returned status code %q instead of 200", req.Host.String(), resp.StatusCode)
-		log.Error().Err(err)
-		err = exceptions.NewBadRequestException(err)
-		return err
-	}
-
-	// add host to the list of hosts
-	q = s.app.Redis.RPush(ctx, keyHostList, req.Host.String())
-
-	if q.Err() != nil {
-		log.Error().Err(q.Err()).Msg("failed to add host to redis")
-
-		return q.Err()
-	}
-
-	// Save host info as a hash
-	q = s.app.Redis.HSet(ctx, MakeNodeHash(req.Host.String()), map[string]interface{}{
-		"host":   req.Host.String(),
-		"port":   fmt.Sprintf("%d", port),
-		"scheme": req.Scheme,
-	})
-
-	if q.Err() != nil {
-		log.Error().Err(q.Err()).Msg("failed to save host info to redis")
-		return q.Err()
-	}
-
-	log.Trace().Msg("RegisterNode end")
-	return
+	return nodes, nil
 }
 
-func newNodeService() nodeApi {
-	return &nodeService{app: app.GetApp()}
+func newNodeService() (nodeApi, error) {
+
+	repo, err := NewNodeRepo()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &nodeService{app: app.GetApp(), repo: repo}, nil
 }
