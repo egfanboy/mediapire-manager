@@ -47,7 +47,7 @@ func (r *consulRepo) GetAllNodes(ctx context.Context) (result []NodeConfig, err 
 
 func (r *consulRepo) GetNode(ctx context.Context, nodeId string) (NodeConfig, error) {
 
-	service, _, err := r.client.Agent().Service("media-host-node-"+nodeId+"23324", &api.QueryOptions{UseCache: false})
+	service, _, err := r.client.Agent().Service("media-host-node-"+nodeId, &api.QueryOptions{UseCache: false})
 
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
