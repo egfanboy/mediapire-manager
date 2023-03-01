@@ -31,12 +31,17 @@ func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]types.
 	}
 
 	for _, node := range nodes {
+		if !node.IsUp {
+			log.Warn().Msgf("Not fetching media from node %s since it is not up.", node.NodeHost)
+			continue
+		}
 
-		items, _, err2 := api.NewClient(ctx).GetMedia(node)
-		if err2 != nil {
-			err = err2
-			log.Error().Err(err).Msgf("Failed to get media from node %s", node.NodeHost)
-			return
+		items, _, errMedia := api.NewClient(ctx).GetMedia(node)
+		if errMedia != nil {
+			log.Error().Err(errMedia).Msgf("Failed to get media from node %s", node.NodeHost)
+
+			// do not fail the request if one node is unreachable.
+			continue
 		}
 
 		result[node.Host()] = items

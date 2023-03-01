@@ -8,6 +8,7 @@ type NodeConfig struct {
 	NodeHost   string `json:"host"`
 	NodePort   string `json:"port"`
 	NodeScheme string `json:"scheme"`
+	IsUp       bool   `json:"isUp"`
 }
 
 func (c NodeConfig) Host() string {
