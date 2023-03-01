@@ -12,11 +12,18 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-func nodeConfigFromConsul(source *api.AgentService) NodeConfig {
-	return NodeConfig{NodeHost: source.Address,
+func nodeConfigFromConsul(source *api.AgentService, status string) NodeConfig {
+	cfg := NodeConfig{NodeHost: source.Address,
 		NodePort:   strconv.Itoa(source.Port),
 		NodeScheme: source.Meta[consul.KeyScheme]}
 
+	if status == api.HealthCritical {
+		cfg.IsUp = false
+	} else {
+		cfg.IsUp = true
+	}
+
+	return cfg
 }
 
 type NodeRepo interface {
@@ -39,7 +46,13 @@ func (r *consulRepo) GetAllNodes(ctx context.Context) (result []NodeConfig, err 
 	}
 
 	for _, service := range services {
-		result = append(result, nodeConfigFromConsul(service))
+		status, _, errHealth := r.client.Agent().AgentHealthServiceByID(service.ID)
+		if errHealth != nil {
+			err = errHealth
+			return
+		}
+
+		result = append(result, nodeConfigFromConsul(service, status))
 	}
 
 	return
@@ -61,7 +74,14 @@ func (r *consulRepo) GetNode(ctx context.Context, nodeId string) (NodeConfig, er
 		}
 	}
 
-	return nodeConfigFromConsul(service), nil
+	status, _, err := r.client.Agent().AgentHealthServiceByID(service.ID)
+	if err != nil {
+		return NodeConfig{}, &exceptions.ApiException{
+			Err: err, StatusCode: http.StatusInternalServerError,
+		}
+	}
+
+	return nodeConfigFromConsul(service, status), nil
 }
 
 func NewNodeRepo() (NodeRepo, error) {
