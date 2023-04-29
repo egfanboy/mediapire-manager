@@ -4,15 +4,16 @@ import (
 	"net/http"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/egfanboy/mediapire-common/router"
 )
 
 const (
-	basePath           = "/media"
-	queryParamFilePath = "filePath"
-	queryParamNodeId   = "nodeId"
+	basePath          = "/media"
+	queryParamMediaId = "mediaId"
+	queryParamNodeId  = "nodeId"
 )
 
 type mediaController struct {
@@ -46,10 +47,10 @@ func (c mediaController) StreamMedia() router.RouteBuilder {
 		SetPath(basePath + "/stream").
 		SetDataType(router.DataTypeFile).
 		SetReturnCode(http.StatusOK).
-		AddQueryParam(router.QueryParam{Name: queryParamFilePath, Required: true}).
+		AddQueryParam(router.QueryParam{Name: queryParamMediaId, Required: true}).
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: true}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			return c.service.StreamMedia(request.Context(), p.Params[queryParamNodeId], p.Params[queryParamFilePath])
+			return c.service.StreamMedia(request.Context(), p.Params[queryParamNodeId], uuid.MustParse(p.Params[queryParamMediaId]))
 		})
 }
 
