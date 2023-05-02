@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/egfanboy/mediapire-manager/pkg/types"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
@@ -54,6 +55,22 @@ func (c mediaController) StreamMedia() router.RouteBuilder {
 		})
 }
 
+func (c mediaController) DownloadMedia() router.RouteBuilder {
+	return router.NewV1RouteBuilder().
+		SetMethod(http.MethodOptions, http.MethodPost).
+		SetPath(basePath + "/download").
+		SetDataType(router.DataTypeFile).
+		SetReturnCode(http.StatusOK).
+		SetHandler(func(httpReq *http.Request, p router.RouteParams) (interface{}, error) {
+			var request types.MediaDownloadRequest
+			err := p.PopulateBody(&request)
+			if err != nil {
+				return nil, err
+			}
+			return c.service.DownloadMedia(httpReq.Context(), request)
+		})
+}
+
 func initController() (mediaController, error) {
 	mediaService, err := newMediaService()
 
@@ -63,7 +80,7 @@ func initController() (mediaController, error) {
 
 	c := mediaController{service: mediaService}
 
-	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia)
+	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia, c.DownloadMedia)
 
 	return c, nil
 }
