@@ -4,26 +4,27 @@ import (
 	"context"
 
 	"github.com/egfanboy/mediapire-manager/internal/node"
+	"github.com/egfanboy/mediapire-manager/pkg/types"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"github.com/egfanboy/mediapire-media-host/pkg/api"
 	mhApi "github.com/egfanboy/mediapire-media-host/pkg/api"
-	"github.com/egfanboy/mediapire-media-host/pkg/types"
+	mhTypes "github.com/egfanboy/mediapire-media-host/pkg/types"
 )
 
 type mediaApi interface {
-	GetMedia(ctx context.Context) (map[string][]types.MediaItem, error)
+	GetMedia(ctx context.Context) (map[string][]mhTypes.MediaItem, error)
 	StreamMedia(ctx context.Context, nodeId string, mediaId uuid.UUID) ([]byte, error)
+	DownloadMedia(ctx context.Context, request types.MediaDownloadRequest) ([]byte, error)
 }
 
 type mediaService struct {
 	nodeRepo node.NodeRepo
 }
 
-func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]types.MediaItem, err error) {
+func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]mhTypes.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
-	result = map[string][]types.MediaItem{}
+	result = map[string][]mhTypes.MediaItem{}
 
 	nodes, err := s.nodeRepo.GetAllNodes(ctx)
 	if err != nil {
@@ -37,7 +38,7 @@ func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]types.
 			continue
 		}
 
-		items, _, errMedia := api.NewClient(ctx).GetMedia(node)
+		items, _, errMedia := mhApi.NewClient(ctx).GetMedia(node)
 		if errMedia != nil {
 			log.Error().Err(errMedia).Msgf("Failed to get media from node %s", node.NodeHost)
 
@@ -69,6 +70,39 @@ func (s *mediaService) StreamMedia(ctx context.Context, nodeId string, mediaId u
 	}
 
 	return b, err
+}
+
+func (s *mediaService) DownloadMedia(ctx context.Context, request types.MediaDownloadRequest) ([]byte, error) {
+	log.Debug().Msg("Start: download media")
+
+	populatedItems := make([]populatedDownloadItem, 0)
+
+	// build a simple cache to just fetch a node once
+	nodeCache := make(map[string]node.NodeConfig)
+
+	for _, item := range request {
+		populatedItem := populatedDownloadItem{
+			MediaId: item.MediaId,
+		}
+
+		if n, ok := nodeCache[item.NodeId]; ok {
+			populatedItem.Node = n
+		} else {
+			node, err := s.nodeRepo.GetNode(ctx, item.NodeId)
+			if err != nil {
+				return nil, err
+			}
+
+			nodeCache[item.NodeId] = node
+			populatedItem.Node = node
+		}
+
+		populatedItems = append(populatedItems, populatedItem)
+	}
+
+	downloader := mediaDownloader{}
+
+	return downloader.Download(ctx, populatedItems)
 }
 
 func newMediaService() (mediaApi, error) {
