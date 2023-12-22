@@ -3,7 +3,12 @@ package media
 import (
 	"context"
 
+	"github.com/egfanboy/mediapire-common/messaging"
+	commonTypes "github.com/egfanboy/mediapire-common/types"
+	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/egfanboy/mediapire-manager/internal/node"
+	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
+	"github.com/egfanboy/mediapire-manager/internal/transfer"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -13,18 +18,53 @@ import (
 )
 
 type mediaApi interface {
-	GetMedia(ctx context.Context) (map[string][]mhTypes.MediaItem, error)
-	StreamMedia(ctx context.Context, nodeId string, mediaId uuid.UUID) ([]byte, error)
-	DownloadMedia(ctx context.Context, request types.MediaDownloadRequest) ([]byte, error)
+	GetMedia(ctx context.Context) (map[uuid.UUID][]mhTypes.MediaItem, error)
+	StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error)
+	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 }
 
 type mediaService struct {
-	nodeRepo node.NodeRepo
+	nodeRepo     node.NodeRepo
+	transferRepo transfer.TransferRepository
 }
 
-func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]mhTypes.MediaItem, err error) {
+func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error) {
+	log.Info().Msg("Starting async downloading")
+
+	inputs := make(map[uuid.UUID][]uuid.UUID)
+
+	for _, item := range request {
+		if _, ok := inputs[item.NodeId]; ok {
+			inputs[item.NodeId] = append(inputs[item.NodeId], item.MediaId)
+		} else {
+			inputs[item.NodeId] = []uuid.UUID{item.MediaId}
+		}
+	}
+	app := app.GetApp()
+	t := transfer.NewTransferModel(app.NodeId, inputs, nil)
+
+	err := s.transferRepo.Save(ctx, t)
+	if err != nil {
+		return commonTypes.Transfer{}, err
+	}
+
+	msg := messaging.TransferMessage{
+		Id:       t.Id.Hex(),
+		TargetId: t.TargetId,
+		Inputs:   t.Inputs,
+	}
+
+	err = rabbitmq.PublishMessage(ctx, messaging.TopicTransfer, msg)
+	if err != nil {
+		log.Err(err).Msg("failed to start async download")
+	}
+
+	return t.ToApiResponse(), err
+}
+
+func (s *mediaService) GetMedia(ctx context.Context) (result map[uuid.UUID][]mhTypes.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
-	result = map[string][]mhTypes.MediaItem{}
+	result = map[uuid.UUID][]mhTypes.MediaItem{}
 
 	nodes, err := s.nodeRepo.GetAllNodes(ctx)
 	if err != nil {
@@ -46,13 +86,13 @@ func (s *mediaService) GetMedia(ctx context.Context) (result map[string][]mhType
 			continue
 		}
 
-		result[node.Host()] = items
+		result[node.Id] = items
 	}
 
 	return
 }
 
-func (s *mediaService) StreamMedia(ctx context.Context, nodeId string, mediaId uuid.UUID) ([]byte, error) {
+func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error) {
 	log.Info().Msgf("Streaming media %s from node %s", mediaId, nodeId)
 	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 
@@ -72,47 +112,21 @@ func (s *mediaService) StreamMedia(ctx context.Context, nodeId string, mediaId u
 	return b, err
 }
 
-func (s *mediaService) DownloadMedia(ctx context.Context, request types.MediaDownloadRequest) ([]byte, error) {
-	log.Debug().Msg("Start: download media")
-
-	populatedItems := make([]populatedDownloadItem, 0)
-
-	// build a simple cache to just fetch a node once
-	nodeCache := make(map[string]node.NodeConfig)
-
-	for _, item := range request {
-		populatedItem := populatedDownloadItem{
-			MediaId: item.MediaId,
-		}
-
-		if n, ok := nodeCache[item.NodeId]; ok {
-			populatedItem.Node = n
-		} else {
-			node, err := s.nodeRepo.GetNode(ctx, item.NodeId)
-			if err != nil {
-				return nil, err
-			}
-
-			nodeCache[item.NodeId] = node
-			populatedItem.Node = node
-		}
-
-		populatedItems = append(populatedItems, populatedItem)
-	}
-
-	downloader := mediaDownloader{}
-
-	return downloader.Download(ctx, populatedItems)
-}
-
 func newMediaService() (mediaApi, error) {
-	repo, err := node.NewNodeRepo()
+	nodeRepo, err := node.NewNodeRepo()
 
 	if err != nil {
 		return nil, err
 	}
 
+	// TODO: this whole function should be using context
+	transferRepo, err := transfer.NewTransferRepository(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	return &mediaService{
-		nodeRepo: repo,
+		nodeRepo:     nodeRepo,
+		transferRepo: transferRepo,
 	}, nil
 }

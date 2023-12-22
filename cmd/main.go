@@ -1,19 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/egfanboy/mediapire-manager/internal/consul"
 	_ "github.com/egfanboy/mediapire-manager/internal/health"
 	_ "github.com/egfanboy/mediapire-manager/internal/media"
+	"github.com/egfanboy/mediapire-manager/internal/mongo"
 	_ "github.com/egfanboy/mediapire-manager/internal/node"
-
-	"net/http"
-	"time"
-
+	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
+	_ "github.com/egfanboy/mediapire-manager/internal/transfer"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -26,6 +28,23 @@ func addCleanupFunc(fn func()) {
 }
 
 func main() {
+	ctx := context.Background()
+
+	err := rabbitmq.Setup(ctx)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to connect to rabbitmq")
+		os.Exit(1)
+	}
+
+	addCleanupFunc(func() { rabbitmq.Cleanup() })
+
+	err = mongo.InitMongo(ctx)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to connect to mongoDB")
+		os.Exit(1)
+	}
+
+	addCleanupFunc(func() { mongo.CleanUpMongo(ctx) })
 
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Info().Msg("Initializing Mediapire Manager")
@@ -45,17 +64,13 @@ func main() {
 
 	mainRouter := mux.NewRouter()
 
-	mediaManager := app.GetApp()
-
-	err := consul.NewConsulClient()
-
+	err = consul.NewConsulClient()
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to connect to consul")
 		os.Exit(1)
 	}
 
 	err = consul.RegisterService()
-
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed to register service to consul")
 		os.Exit(1)
@@ -63,6 +78,7 @@ func main() {
 
 	addCleanupFunc(func() { consul.UnregisterService() })
 
+	mediaManager := app.GetApp()
 	for _, c := range mediaManager.ControllerRegistry.GetControllers() {
 		for _, b := range c.GetApis() {
 			b.Build(mainRouter)

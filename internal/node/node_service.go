@@ -38,7 +38,7 @@ func (s *nodeService) GetAllNodes(ctx context.Context) ([]NodeConfig, error) {
 	return nodes, nil
 }
 
-func newNodeService() (nodeApi, error) {
+func NewNodeService() (nodeApi, error) {
 
 	repo, err := NewNodeRepo()
 

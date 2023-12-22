@@ -51,7 +51,7 @@ func (c mediaController) StreamMedia() router.RouteBuilder {
 		AddQueryParam(router.QueryParam{Name: queryParamMediaId, Required: true}).
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: true}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			return c.service.StreamMedia(request.Context(), p.Params[queryParamNodeId], uuid.MustParse(p.Params[queryParamMediaId]))
+			return c.service.StreamMedia(request.Context(), uuid.MustParse(p.Params[queryParamNodeId]), uuid.MustParse(p.Params[queryParamMediaId]))
 		})
 }
 
@@ -59,7 +59,6 @@ func (c mediaController) DownloadMedia() router.RouteBuilder {
 	return router.NewV1RouteBuilder().
 		SetMethod(http.MethodOptions, http.MethodPost).
 		SetPath(basePath + "/download").
-		SetDataType(router.DataTypeFile).
 		SetReturnCode(http.StatusOK).
 		SetHandler(func(httpReq *http.Request, p router.RouteParams) (interface{}, error) {
 			var request types.MediaDownloadRequest
@@ -67,7 +66,8 @@ func (c mediaController) DownloadMedia() router.RouteBuilder {
 			if err != nil {
 				return nil, err
 			}
-			return c.service.DownloadMedia(httpReq.Context(), request)
+
+			return c.service.DownloadMediaAsync(httpReq.Context(), request)
 		})
 }
 

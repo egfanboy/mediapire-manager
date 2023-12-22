@@ -2,13 +2,16 @@ package node
 
 import (
 	"strconv"
+
+	"github.com/google/uuid"
 )
 
 type NodeConfig struct {
-	NodeHost   string `json:"host"`
-	NodePort   string `json:"port"`
-	NodeScheme string `json:"scheme"`
-	IsUp       bool   `json:"isUp"`
+	NodeHost   string    `json:"host"`
+	NodePort   string    `json:"port"`
+	NodeScheme string    `json:"scheme"`
+	IsUp       bool      `json:"isUp"`
+	Id         uuid.UUID `json:"id"`
 }
 
 func (c NodeConfig) Host() string {
