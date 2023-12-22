@@ -5,3 +5,9 @@ consul:
   scheme: http
   port: 8500
   address: 127.0.0.1
+rabbit:
+  username: guest
+  password: guest
+  address: 127.0.0.1
+  port: 5672
+mongoConnectionURI: mongodb://localhost:27017

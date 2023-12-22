@@ -3,7 +3,7 @@ package types
 import "github.com/google/uuid"
 
 type MediaDownloadRequestItem struct {
-	NodeId  string    `json:"nodeId"`
+	NodeId  uuid.UUID `json:"nodeId"`
 	MediaId uuid.UUID `json:"mediaId"`
 }
 

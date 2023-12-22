@@ -36,12 +36,11 @@ func (c nodeController) getAllNodes() router.RouteBuilder {
 }
 
 func initController() (nodeController, error) {
-
-	nodeService, err := newNodeService()
-
+	nodeService, err := NewNodeService()
 	if err != nil {
 		return nodeController{}, err
 	}
+
 	c := nodeController{service: nodeService}
 
 	c.builders = append(c.builders, c.getAllNodes)

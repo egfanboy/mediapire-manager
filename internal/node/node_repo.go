@@ -9,13 +9,22 @@ import (
 	"github.com/egfanboy/mediapire-common/exceptions"
 	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/egfanboy/mediapire-manager/internal/consul"
+	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 )
 
-func nodeConfigFromConsul(source *api.AgentService, status string) NodeConfig {
-	cfg := NodeConfig{NodeHost: source.Address,
+func nodeConfigFromConsul(source *api.AgentService, status string) (NodeConfig, error) {
+	nodeId, err := uuid.Parse(source.ID)
+	if err != nil {
+		return NodeConfig{}, err
+	}
+
+	cfg := NodeConfig{
+		NodeHost:   source.Address,
 		NodePort:   strconv.Itoa(source.Port),
-		NodeScheme: source.Meta[consul.KeyScheme]}
+		NodeScheme: source.Meta[consul.KeyScheme],
+		Id:         nodeId,
+	}
 
 	if status == api.HealthCritical {
 		cfg.IsUp = false
@@ -23,12 +32,12 @@ func nodeConfigFromConsul(source *api.AgentService, status string) NodeConfig {
 		cfg.IsUp = true
 	}
 
-	return cfg
+	return cfg, nil
 }
 
 type NodeRepo interface {
 	GetAllNodes(ctx context.Context) ([]NodeConfig, error)
-	GetNode(ctx context.Context, nodeId string) (NodeConfig, error)
+	GetNode(ctx context.Context, nodeId uuid.UUID) (NodeConfig, error)
 }
 
 type consulRepo struct {
@@ -52,16 +61,18 @@ func (r *consulRepo) GetAllNodes(ctx context.Context) (result []NodeConfig, err 
 			return
 		}
 
-		result = append(result, nodeConfigFromConsul(service, status))
+		cfg, err := nodeConfigFromConsul(service, status)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, cfg)
 	}
 
 	return
 }
 
-func (r *consulRepo) GetNode(ctx context.Context, nodeId string) (NodeConfig, error) {
-
-	service, _, err := r.client.Agent().Service("media-host-node-"+nodeId, &api.QueryOptions{UseCache: false})
-
+func (r *consulRepo) GetNode(ctx context.Context, nodeId uuid.UUID) (NodeConfig, error) {
+	service, _, err := r.client.Agent().Service(nodeId.String(), &api.QueryOptions{UseCache: false})
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return NodeConfig{}, &exceptions.ApiException{
@@ -81,7 +92,7 @@ func (r *consulRepo) GetNode(ctx context.Context, nodeId string) (NodeConfig, er
 		}
 	}
 
-	return nodeConfigFromConsul(service, status), nil
+	return nodeConfigFromConsul(service, status)
 }
 
 func NewNodeRepo() (NodeRepo, error) {

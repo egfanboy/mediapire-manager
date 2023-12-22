@@ -1,10 +1,11 @@
-package media
+package transfer
 
 import (
 	"archive/zip"
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 
@@ -12,25 +13,19 @@ import (
 	mhApi "github.com/egfanboy/mediapire-media-host/pkg/api"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type downloaderQueue struct {
-	// mapping between nodeId and the mediaIds from that node to download
-	queue map[node.NodeConfig][]uuid.UUID
-
-	content map[node.NodeConfig][]byte
+	queue      []node.NodeConfig
+	transferId string
+	content    map[node.NodeConfig][]byte
 }
 
 func (q *downloaderQueue) processNode(ctx context.Context, n node.NodeConfig) error {
-	ids, ok := q.queue[n]
-
-	if !ok {
-		return errors.New("Nope")
-	}
-
 	client := mhApi.NewClient(ctx)
 
-	content, _, err := client.DownloadMedia(n, ids)
+	content, _, err := client.DownloadTransfer(n, q.transferId)
 	if err != nil {
 		return err
 	}
@@ -48,7 +43,7 @@ func (q *downloaderQueue) ProcessQueue(ctx context.Context) error {
 	wg := sync.WaitGroup{}
 
 	// get media from all nodes at the same time
-	for nodeInQueue := range q.queue {
+	for _, nodeInQueue := range q.queue {
 		wg.Add(1)
 
 		go func(n node.NodeConfig) {
@@ -79,11 +74,8 @@ func (q *downloaderQueue) ProcessQueue(ctx context.Context) error {
 }
 
 func (q *downloaderQueue) GetContent(ctx context.Context) ([]byte, error) {
-
 	numberOfNodes := len(q.queue)
-
 	result := new(bytes.Buffer)
-
 	zipWriter := zip.NewWriter(result)
 
 	for _, nodeContent := range q.content {
@@ -114,37 +106,48 @@ func (q *downloaderQueue) GetContent(ctx context.Context) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-
 		}
-
 	}
 
 	err := zipWriter.Close()
-
 	return result.Bytes(), err
 }
 
 type mediaDownloader struct{}
 
-type populatedDownloadItem struct {
-	Node    node.NodeConfig
-	MediaId uuid.UUID
-}
+func (mediaDownloader) Download(ctx context.Context, transferId primitive.ObjectID, nodeIds []uuid.UUID) ([]byte, error) {
+	nodes := make([]node.NodeConfig, 0)
 
-func (mediaDownloader) Download(ctx context.Context, items []populatedDownloadItem) ([]byte, error) {
-	nodeMappings := make(map[node.NodeConfig][]uuid.UUID)
+	nodeService, err := node.NewNodeService()
+	if err != nil {
+		return nil, err
+	}
 
-	for _, item := range items {
-		if mapping, ok := nodeMappings[item.Node]; ok {
-			nodeMappings[item.Node] = append(mapping, item.MediaId)
+	allNodes, err := nodeService.GetAllNodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, nodeId := range nodeIds {
+		var node *node.NodeConfig
+
+		for i := range allNodes {
+			if allNodes[i].Id == nodeId {
+				node = &allNodes[i]
+				break
+			}
+		}
+
+		if node != nil {
+			nodes = append(nodes, *node)
 		} else {
-			nodeMappings[item.Node] = []uuid.UUID{item.MediaId}
+			return nil, fmt.Errorf("no node found with id %q", nodeId)
 		}
 	}
 
-	queue := &downloaderQueue{queue: nodeMappings, content: map[node.NodeConfig][]byte{}}
+	queue := &downloaderQueue{queue: nodes, content: map[node.NodeConfig][]byte{}, transferId: transferId.Hex()}
 
-	err := queue.ProcessQueue(ctx)
+	err = queue.ProcessQueue(ctx)
 	if err != nil {
 		log.Err(err).Msg("Failed to process download queue")
 
