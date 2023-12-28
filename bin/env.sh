@@ -1,3 +1,0 @@
-#!/bin/bash
-$MANAGER_CONFIG_PATH=
-$MANAGER_LOG_PATH=
