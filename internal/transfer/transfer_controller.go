@@ -40,10 +40,29 @@ func (c transfersController) DownloadTransfer() router.RouteBuilder {
 		})
 }
 
+func (c transfersController) GetTransferById() router.RouteBuilder {
+	return router.NewV1RouteBuilder().
+		SetMethod(http.MethodOptions, http.MethodGet).
+		SetPath(basePath + "/{transferId}").
+		SetReturnCode(http.StatusOK).
+		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
+			transferId, ok := p.Params["transferId"]
+			if !ok {
+				return nil, errors.New("transferId not found in API path")
+			}
+
+			return c.service.GetTransfer(request.Context(), transferId)
+		})
+}
+
 func initController() transfersController {
 	c := transfersController{service: newTransfersService()}
 
-	c.builders = append(c.builders, c.DownloadTransfer)
+	c.builders = append(
+		c.builders,
+		c.DownloadTransfer,
+		c.GetTransferById,
+	)
 
 	return c
 }
