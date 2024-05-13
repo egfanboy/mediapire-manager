@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/egfanboy/mediapire-common/exceptions"
+	"github.com/egfanboy/mediapire-common/types"
 	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,6 +16,7 @@ import (
 
 type transfersApi interface {
 	Download(ctx context.Context, transferId string) ([]byte, error)
+	GetTransfer(ctx context.Context, transferId string) (types.Transfer, error)
 }
 
 type transfersService struct {
@@ -61,6 +63,30 @@ func (s *transfersService) Download(ctx context.Context, transferId string) ([]b
 	}
 
 	return fileContent, nil
+}
+
+func (s *transfersService) GetTransfer(ctx context.Context, transferId string) (types.Transfer, error) {
+	log.Info().Msgf("Get Transfer: start id %s", transferId)
+
+	transferObjectId, err := primitive.ObjectIDFromHex(transferId)
+	if err != nil {
+		log.Err(err).Msgf("Failed to convert transferId %s to an ObjectId", transferId)
+		return types.Transfer{}, err
+	}
+
+	transferRepo, err := NewTransferRepository(ctx)
+	if err != nil {
+		log.Err(err).Msg("failed to instantiate transfer repository")
+		return types.Transfer{}, err
+	}
+
+	transfer, err := transferRepo.GetById(ctx, transferObjectId)
+	if err != nil {
+		log.Err(err).Msgf("failed to get transfer with id %s from the database", transferId)
+		return types.Transfer{}, err
+	}
+
+	return transfer.ToApiResponse(), nil
 }
 
 func newTransfersService() transfersApi {
