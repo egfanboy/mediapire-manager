@@ -21,6 +21,7 @@ type mediaApi interface {
 	GetMedia(ctx context.Context) (map[uuid.UUID][]mhTypes.MediaItem, error)
 	StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error)
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
+	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
 }
 
 type mediaService struct {
@@ -110,6 +111,27 @@ func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaI
 	}
 
 	return b, err
+}
+
+func (s *mediaService) DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error {
+	log.Info().Msgf("Start: delete media")
+
+	inputs := make(map[uuid.UUID][]uuid.UUID)
+
+	for _, item := range request {
+		inputs[item.NodeId] = append(inputs[item.NodeId], item.MediaId)
+	}
+
+	msg := messaging.DeleteMediaMessage{
+		MediaToDelete: inputs,
+	}
+
+	err := rabbitmq.PublishMessage(ctx, messaging.TopicDeleteMedia, msg)
+	if err != nil {
+		log.Err(err).Msgf("Failed to publish message to delete media")
+	}
+
+	return err
 }
 
 func newMediaService() (mediaApi, error) {
