@@ -71,6 +71,23 @@ func (c mediaController) DownloadMedia() router.RouteBuilder {
 		})
 }
 
+func (c mediaController) DeleteMedia() router.RouteBuilder {
+	return router.NewV1RouteBuilder().
+		SetMethod(http.MethodOptions, http.MethodDelete).
+		SetPath(basePath).
+		SetReturnCode(http.StatusAccepted).
+		SetHandler(func(httpReq *http.Request, p router.RouteParams) (interface{}, error) {
+			var request types.MediaDeleteRequest
+			err := p.PopulateBody(&request)
+			if err != nil {
+				return nil, err
+			}
+
+			err = c.service.DeleteMedia(httpReq.Context(), request)
+			return nil, err
+		})
+}
+
 func initController() (mediaController, error) {
 	mediaService, err := newMediaService()
 
@@ -80,7 +97,7 @@ func initController() (mediaController, error) {
 
 	c := mediaController{service: mediaService}
 
-	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia, c.DownloadMedia)
+	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia, c.DownloadMedia, c.DeleteMedia)
 
 	return c, nil
 }

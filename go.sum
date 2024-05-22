@@ -27,6 +27,8 @@ github.com/dhowden/plist v0.0.0-20141002110153-5db6e0d9931a/go.mod h1:sLjdR6uwx3
 github.com/dhowden/tag v0.0.0-20220618230019-adf36e896086/go.mod h1:Z3Lomva4pyMWYezjMAU5QWRh0p1VvO4199OHlFnyKkM=
 github.com/egfanboy/mediapire-common v0.0.0-20231219000342-fbb6228cf11c h1:9eHPsRctkeGZGeEoKwqTDpishk/JHvq+p9AMzJ2mkZk=
 github.com/egfanboy/mediapire-common v0.0.0-20231219000342-fbb6228cf11c/go.mod h1:fkbcyi+5inobqkjLF9wtVdDioekNiFixiXgHBi0UEpQ=
+github.com/egfanboy/mediapire-common v0.0.0-20240522004433-cbd1b5041bc7 h1:2icXJQ+GwLQwHD8ikzMfT2WvV6lgIcs4g4VX2y+QN6w=
+github.com/egfanboy/mediapire-common v0.0.0-20240522004433-cbd1b5041bc7/go.mod h1:fkbcyi+5inobqkjLF9wtVdDioekNiFixiXgHBi0UEpQ=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20231222181916-4af0e32008a0 h1:y3PQqnQhwUvwhwY54siYCcsdwwgudJhEZ5M8rno/vLg=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20231222181916-4af0e32008a0/go.mod h1:1x2bO++cHUP3+6HGVp6+kX0LkWmZQKy4SRqR9Fwi9vo=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
