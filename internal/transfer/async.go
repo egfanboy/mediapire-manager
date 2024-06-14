@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/egfanboy/mediapire-common/messaging"
 	"github.com/egfanboy/mediapire-manager/internal/app"
@@ -211,6 +212,13 @@ func saveContent(ctx context.Context, transfer *Transfer, content []byte) {
 	if err != nil {
 		log.Err(err).Msg("failed to save transfer record")
 	}
+
+	// delete transfer archive after transfer expiry
+	time.AfterFunc(time.Until(transfer.Expiry), func() {
+		transferService := newTransfersService()
+
+		transferService.CleanupTransfer(ctx, transfer.Id.Hex())
+	})
 }
 
 func init() {

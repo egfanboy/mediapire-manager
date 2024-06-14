@@ -42,7 +42,7 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 		}
 	}
 	app := app.GetApp()
-	t := transfer.NewTransferModel(app.NodeId, inputs, nil)
+	t := transfer.NewTransferModel(app.NodeId, inputs)
 
 	err := s.transferRepo.Save(ctx, t)
 	if err != nil {
