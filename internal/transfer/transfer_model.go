@@ -63,7 +63,8 @@ func (t *Transfer) AllNodesHandled() bool {
 	return allNodesHandled
 }
 
-func NewTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]uuid.UUID, expiry *time.Time) *Transfer {
+// for now don't expose a function that allows to set the expiry
+func newTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]uuid.UUID, expiry *time.Time) *Transfer {
 	outputs := make(map[uuid.UUID]bool)
 
 	for k := range inputs {
@@ -85,4 +86,8 @@ func NewTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]uuid.UUID, expi
 	}
 
 	return t
+}
+
+func NewTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]uuid.UUID) *Transfer {
+	return newTransferModel(targetId, inputs, nil)
 }
