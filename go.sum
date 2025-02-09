@@ -28,8 +28,8 @@ github.com/dhowden/plist v0.0.0-20141002110153-5db6e0d9931a/go.mod h1:sLjdR6uwx3
 github.com/dhowden/tag v0.0.0-20220618230019-adf36e896086/go.mod h1:Z3Lomva4pyMWYezjMAU5QWRh0p1VvO4199OHlFnyKkM=
 github.com/egfanboy/mediapire-common v0.0.0-20240522004433-cbd1b5041bc7 h1:2icXJQ+GwLQwHD8ikzMfT2WvV6lgIcs4g4VX2y+QN6w=
 github.com/egfanboy/mediapire-common v0.0.0-20240522004433-cbd1b5041bc7/go.mod h1:fkbcyi+5inobqkjLF9wtVdDioekNiFixiXgHBi0UEpQ=
-github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20241212032135-16be512f1250 h1:TS6Lxhw/wanU/FFWp5oRMasj6CsMwTDUNLH9kvR8Umw=
-github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20241212032135-16be512f1250/go.mod h1:PVeGILHldizW3B/k2kSJjLawzeflz/ptTSHIYGmhvu4=
+github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250209202443-affe1d3552c7 h1:lC91VCrPueu0THBluoD9KnrlHEO2VVhgyVivO6Z3IwI=
+github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250209202443-affe1d3552c7/go.mod h1:PVeGILHldizW3B/k2kSJjLawzeflz/ptTSHIYGmhvu4=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
 github.com/fatih/color v1.13.0 h1:8LOYc1KYPPmyKMuN8QV2DNRWNbLo6LZ0iLs8+mlH53w=

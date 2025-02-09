@@ -10,12 +10,19 @@ import (
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/egfanboy/mediapire-manager/internal/consul"
+	"github.com/egfanboy/mediapire-manager/internal/mongo"
+	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
+
+	// APIs - start
+
 	_ "github.com/egfanboy/mediapire-manager/internal/health"
 	_ "github.com/egfanboy/mediapire-manager/internal/media"
-	"github.com/egfanboy/mediapire-manager/internal/mongo"
 	_ "github.com/egfanboy/mediapire-manager/internal/node"
-	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
+	_ "github.com/egfanboy/mediapire-manager/internal/settings"
 	_ "github.com/egfanboy/mediapire-manager/internal/transfer"
+
+	// APIs - end
+
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
