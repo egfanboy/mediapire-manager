@@ -23,6 +23,7 @@ type mediaApi interface {
 	StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error)
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
+	GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error)
 }
 
 type mediaService struct {
@@ -135,6 +136,25 @@ func (s *mediaService) DeleteMedia(ctx context.Context, request types.MediaDelet
 	}
 
 	return err
+}
+
+func (s *mediaService) GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error) {
+	log.Info().Msgf("Getting art for media %s from node %s", mediaId, nodeId)
+	node, err := s.nodeRepo.GetNode(ctx, nodeId)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get node with id %s", nodeId)
+		return nil, err
+	}
+
+	client := mhApi.NewClient(node)
+
+	b, _, err := client.GetMediaArt(ctx, mediaId)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get art for media on node %s", nodeId)
+	}
+
+	return b, err
 }
 
 func newMediaService() (mediaApi, error) {
