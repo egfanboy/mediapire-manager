@@ -2,6 +2,7 @@ package media
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
@@ -12,9 +13,10 @@ import (
 )
 
 const (
-	basePath          = "/media"
-	queryParamMediaId = "mediaId"
-	queryParamNodeId  = "nodeId"
+	basePath            = "/media"
+	queryParamMediaId   = "mediaId"
+	queryParamNodeId    = "nodeId"
+	queryParamMediaType = "mediaType"
 )
 
 type mediaController struct {
@@ -36,9 +38,13 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 		SetMethod(http.MethodOptions, http.MethodGet).
 		SetPath(basePath).
 		SetReturnCode(http.StatusOK).
+		AddQueryParam(router.QueryParam{Name: queryParamMediaType, Required: false}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-
-			return c.service.GetMedia(request.Context())
+			if mediaType, ok := p.Params[queryParamMediaType]; ok {
+				return c.service.GetMedia(request.Context(), strings.Split(mediaType, ","))
+			} else {
+				return c.service.GetMedia(request.Context(), []string{})
+			}
 		})
 }
 

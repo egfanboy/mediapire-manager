@@ -2,6 +2,7 @@ package media
 
 import (
 	"context"
+	"time"
 
 	"github.com/egfanboy/mediapire-common/messaging"
 	commonTypes "github.com/egfanboy/mediapire-common/types"
@@ -18,7 +19,7 @@ import (
 )
 
 type mediaApi interface {
-	GetMedia(ctx context.Context) (map[uuid.UUID][]mhTypes.MediaItem, error)
+	GetMedia(ctx context.Context, mediaTypes []string) (map[uuid.UUID][]mhTypes.MediaItem, error)
 	StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error)
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
@@ -63,7 +64,7 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 	return t.ToApiResponse(), err
 }
 
-func (s *mediaService) GetMedia(ctx context.Context) (result map[uuid.UUID][]mhTypes.MediaItem, err error) {
+func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string) (result map[uuid.UUID][]mhTypes.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
 	result = map[uuid.UUID][]mhTypes.MediaItem{}
 
@@ -79,7 +80,10 @@ func (s *mediaService) GetMedia(ctx context.Context) (result map[uuid.UUID][]mhT
 			continue
 		}
 
-		items, _, errMedia := mhApi.NewClient(ctx).GetMedia(node)
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		items, _, errMedia := mhApi.NewClient(node).GetMedia(ctx, &mediaTypes)
 		if errMedia != nil {
 			log.Error().Err(errMedia).Msgf("Failed to get media from node %s", node.NodeHost)
 
@@ -102,10 +106,9 @@ func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaI
 		return nil, err
 	}
 
-	client := mhApi.NewClient(ctx)
+	client := mhApi.NewClient(node)
 
-	b, _, err := client.StreamMedia(node, mediaId)
-
+	b, _, err := client.StreamMedia(ctx, mediaId)
 	if err != nil {
 		log.Error().Err(err).Msgf("Failed stream media on node %s", nodeId)
 	}
