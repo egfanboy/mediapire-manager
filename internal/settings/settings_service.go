@@ -54,10 +54,10 @@ func (s *settingsService) GetSettings(ctx context.Context) (result types.MediaSe
 		for _, v := range nodeSettings.FileTypes {
 			fileTypeMapping[v] = ""
 		}
+	}
 
-		for k := range fileTypeMapping {
-			result.FileTypes = append(result.FileTypes, k)
-		}
+	for k := range fileTypeMapping {
+		result.FileTypes = append(result.FileTypes, k)
 	}
 
 	return
