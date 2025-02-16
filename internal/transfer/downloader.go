@@ -23,9 +23,9 @@ type downloaderQueue struct {
 }
 
 func (q *downloaderQueue) processNode(ctx context.Context, n node.NodeConfig) error {
-	client := mhApi.NewClient(ctx)
+	client := mhApi.NewClient(n)
 
-	content, _, err := client.DownloadTransfer(n, q.transferId)
+	content, _, err := client.DownloadTransfer(ctx, q.transferId)
 	if err != nil {
 		return err
 	}

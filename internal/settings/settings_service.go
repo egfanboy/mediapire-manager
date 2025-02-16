@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/egfanboy/mediapire-common/exceptions"
 	"github.com/egfanboy/mediapire-manager/internal/node"
@@ -39,8 +40,10 @@ func (s *settingsService) GetSettings(ctx context.Context) (result types.MediaSe
 			continue
 		}
 
-		// TODO: restrict time it takes to get a response
-		nodeSettings, _, errSettings := mhApi.NewClient(ctx).GetSettings(node)
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+
+		nodeSettings, _, errSettings := mhApi.NewClient(node).GetSettings(ctx)
 		if errSettings != nil {
 			log.Error().Err(errSettings).Msgf("Failed to get settings from node %s", node.NodeHost)
 
@@ -74,7 +77,7 @@ func (s *settingsService) GetNodeSettings(ctx context.Context, nodeId uuid.UUID)
 		return
 	}
 
-	result, _, err = mhApi.NewClient(ctx).GetSettings(node)
+	result, _, err = mhApi.NewClient(node).GetSettings(ctx)
 	return
 }
 
