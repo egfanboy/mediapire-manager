@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/egfanboy/mediapire-common v0.0.0-20240522004433-cbd1b5041bc7
-	github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250216051906-344e623484bf
+	github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250216203117-d8281ae0b8fe
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.15.3

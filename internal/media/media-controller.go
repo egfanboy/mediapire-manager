@@ -94,6 +94,18 @@ func (c mediaController) DeleteMedia() router.RouteBuilder {
 		})
 }
 
+func (c mediaController) handleGetArt() router.RouteBuilder {
+	return router.NewV1RouteBuilder().
+		SetMethod(http.MethodOptions, http.MethodGet).
+		SetPath(basePath + "/{mediaId}/art").
+		SetReturnCode(http.StatusOK).
+		SetDataType(router.DataTypeFile).
+		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: true}).
+		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
+			return c.service.GetMediaArt(request.Context(), uuid.MustParse(p.Params[queryParamNodeId]), uuid.MustParse(p.Params[queryParamMediaId]))
+		})
+}
+
 func initController() (mediaController, error) {
 	mediaService, err := newMediaService()
 
@@ -103,7 +115,7 @@ func initController() (mediaController, error) {
 
 	c := mediaController{service: mediaService}
 
-	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia, c.DownloadMedia, c.DeleteMedia)
+	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia, c.DownloadMedia, c.DeleteMedia, c.handleGetArt)
 
 	return c, nil
 }
