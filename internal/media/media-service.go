@@ -20,10 +20,10 @@ import (
 
 type mediaApi interface {
 	GetMedia(ctx context.Context, mediaTypes []string) (map[uuid.UUID][]mhTypes.MediaItem, error)
-	StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error)
+	StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error)
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
-	GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error)
+	GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error)
 }
 
 type mediaService struct {
@@ -34,13 +34,13 @@ type mediaService struct {
 func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error) {
 	log.Info().Msg("Starting async downloading")
 
-	inputs := make(map[uuid.UUID][]uuid.UUID)
+	inputs := make(map[uuid.UUID][]string)
 
 	for _, item := range request {
 		if _, ok := inputs[item.NodeId]; ok {
 			inputs[item.NodeId] = append(inputs[item.NodeId], item.MediaId)
 		} else {
-			inputs[item.NodeId] = []uuid.UUID{item.MediaId}
+			inputs[item.NodeId] = []string{item.MediaId}
 		}
 	}
 	app := app.GetApp()
@@ -98,7 +98,7 @@ func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string) (resul
 	return
 }
 
-func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error) {
+func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error) {
 	log.Info().Msgf("Streaming media %s from node %s", mediaId, nodeId)
 	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 
@@ -120,7 +120,7 @@ func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaI
 func (s *mediaService) DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error {
 	log.Info().Msgf("Start: delete media")
 
-	inputs := make(map[uuid.UUID][]uuid.UUID)
+	inputs := make(map[uuid.UUID][]string)
 
 	for _, item := range request {
 		inputs[item.NodeId] = append(inputs[item.NodeId], item.MediaId)
@@ -138,7 +138,7 @@ func (s *mediaService) DeleteMedia(ctx context.Context, request types.MediaDelet
 	return err
 }
 
-func (s *mediaService) GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId uuid.UUID) ([]byte, error) {
+func (s *mediaService) GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error) {
 	log.Info().Msgf("Getting art for media %s from node %s", mediaId, nodeId)
 	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 
