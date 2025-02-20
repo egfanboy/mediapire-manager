@@ -153,9 +153,17 @@ func handleProcessedtransfer(ctx context.Context, transferRecord *Transfer) {
 	sendTransferReadyMessage(ctx, transferRecord, content)
 }
 
-// TODO: implement
 func sendTransferReadyMessage(ctx context.Context, transfer *Transfer, content []byte) {
-	return
+	msg := messaging.TransferReadyMessage{
+		TransferId: transfer.Id.Hex(),
+		// bytes of the zip file
+		Content:  content,
+		TargetId: transfer.TargetId,
+	}
+	err := rabbitmq.PublishMessage(ctx, messaging.TopicTransferReady, msg)
+	if err != nil {
+		log.Err(err).Msg("failed to start async download")
+	}
 }
 
 func saveContent(ctx context.Context, transfer *Transfer, content []byte) {
@@ -221,6 +229,78 @@ func saveContent(ctx context.Context, transfer *Transfer, content []byte) {
 	})
 }
 
+func handleTransferReadyUpdate(ctx context.Context, msg amqp091.Delivery) {
+	msg.Ack(false)
+
+	var updateMsg messaging.TransferReadyUpdateMessage
+
+	err := json.Unmarshal(msg.Body, &updateMsg)
+	if err != nil {
+		log.Err(err).Msg("failed to unmarshal update transfer ready message")
+
+		return
+	}
+
+	transferRepo, err := NewTransferRepository(ctx)
+	if err != nil {
+		log.Err(err).Msg("failed to instantiate transfer repository")
+
+		return
+	}
+
+	transferObjectId, err := primitive.ObjectIDFromHex(updateMsg.TransferId)
+	if err != nil {
+		log.Err(err).Msgf("failed to convert transfer id %s to object id", updateMsg.TransferId)
+
+		return
+	}
+
+	transferRecord, err := transferRepo.GetById(ctx, transferObjectId)
+	if err != nil {
+		log.Err(err).Msgf("failed to find transfer with id %s", updateMsg.TransferId)
+
+		return
+	}
+
+	// should not be here if the status is not processing_complete
+	if transferRecord.Status != StatusProcessComplete {
+		log.
+			Err(err).
+			Msgf(
+				"invalid ready update message for transfer with id %s since transfer status is %s",
+				updateMsg.TransferId,
+				transferRecord.Status,
+			)
+
+		return
+	}
+
+	// since the content was transfered from a node to another, send delete messages to the input nodes
+	deleteMsg := messaging.DeleteMediaMessage{
+		MediaToDelete: transferRecord.Inputs,
+	}
+
+	err = rabbitmq.PublishMessage(ctx, messaging.TopicDeleteMedia, deleteMsg)
+	if err != nil {
+		log.Err(err).Msgf("Failed to publish message to delete media")
+	}
+
+	transferRecord.Status = StatusComplete
+
+	err = transferRepo.Save(ctx, transferRecord)
+	if err != nil {
+		log.
+			Err(err).
+			Msgf(
+				"failed to update transfer status to complete for transfer with id %s ",
+				updateMsg.TransferId,
+			)
+
+	}
+
+}
+
 func init() {
 	rabbitmq.RegisterConsumer(handleTransferUpdateMessage, messaging.TopicTransferUpdate)
+	rabbitmq.RegisterConsumer(handleTransferReadyUpdate, messaging.TopicTransferReadyUpdate)
 }

@@ -20,9 +20,9 @@ const (
 )
 
 type Transfer struct {
-	Id       primitive.ObjectID        `json:"id" bson:"_id,omitempty"`
-	TargetId uuid.UUID                 `json:"targetId" bson:"target_id"`
-	Inputs   map[uuid.UUID][]uuid.UUID `json:"inputs" bson:"inputs"`
+	Id       primitive.ObjectID     `json:"id" bson:"_id,omitempty"`
+	TargetId uuid.UUID              `json:"targetId" bson:"target_id"`
+	Inputs   map[uuid.UUID][]string `json:"inputs" bson:"inputs"`
 	// tracks which input has responded
 	Outputs       map[uuid.UUID]bool `json:"-" bson:"outputs"`
 	Status        TransferStatus     `json:"status" bson:"status"`
@@ -64,7 +64,7 @@ func (t *Transfer) AllNodesHandled() bool {
 }
 
 // for now don't expose a function that allows to set the expiry
-func newTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]uuid.UUID, expiry *time.Time) *Transfer {
+func newTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]string, expiry *time.Time) *Transfer {
 	outputs := make(map[uuid.UUID]bool)
 
 	for k := range inputs {
@@ -88,6 +88,6 @@ func newTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]uuid.UUID, expi
 	return t
 }
 
-func NewTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]uuid.UUID) *Transfer {
+func NewTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]string) *Transfer {
 	return newTransferModel(targetId, inputs, nil)
 }

@@ -57,7 +57,7 @@ func (c mediaController) StreamMedia() router.RouteBuilder {
 		AddQueryParam(router.QueryParam{Name: queryParamMediaId, Required: true}).
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: true}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			return c.service.StreamMedia(request.Context(), uuid.MustParse(p.Params[queryParamNodeId]), uuid.MustParse(p.Params[queryParamMediaId]))
+			return c.service.StreamMedia(request.Context(), uuid.MustParse(p.Params[queryParamNodeId]), p.Params[queryParamMediaId])
 		})
 }
 
@@ -102,7 +102,7 @@ func (c mediaController) handleGetArt() router.RouteBuilder {
 		SetDataType(router.DataTypeFile).
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: true}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			return c.service.GetMediaArt(request.Context(), uuid.MustParse(p.Params[queryParamNodeId]), uuid.MustParse(p.Params[queryParamMediaId]))
+			return c.service.GetMediaArt(request.Context(), uuid.MustParse(p.Params[queryParamNodeId]), p.Params[queryParamMediaId])
 		})
 }
 
