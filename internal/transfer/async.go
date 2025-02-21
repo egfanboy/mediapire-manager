@@ -23,6 +23,8 @@ func handleTransferUpdateMessage(ctx context.Context, msg amqp091.Delivery) {
 
 	var updateMsg messaging.TransferUpdateMessage
 
+	log.Info().Msg("Received transfer update message")
+
 	err := json.Unmarshal(msg.Body, &updateMsg)
 	if err != nil {
 		log.Err(err).Msg("failed to unmarshal update transfer message")
@@ -99,6 +101,7 @@ func handleTransferInProgress(ctx context.Context, updateMsg messaging.TransferU
 }
 
 func handleProcessedtransfer(ctx context.Context, transferRecord *Transfer) {
+	log.Info().Msgf("Transfer %s is proccessed, gathering content from nodes", transferRecord.Id.Hex())
 	transferRepo, err := NewTransferRepository(ctx)
 	if err != nil {
 		log.Err(err).Msg("failed to instantiate download repository")
@@ -114,7 +117,7 @@ func handleProcessedtransfer(ctx context.Context, transferRecord *Transfer) {
 			log.Err(errMsg)
 
 			transferRecord.Status = StatusFailed
-			transferRecord.FailureReason = err.Error()
+			transferRecord.FailureReason = errMsg.Error()
 
 			err = transferRepo.Save(ctx, transferRecord)
 			if err != nil {
@@ -154,6 +157,7 @@ func handleProcessedtransfer(ctx context.Context, transferRecord *Transfer) {
 }
 
 func sendTransferReadyMessage(ctx context.Context, transfer *Transfer, content []byte) {
+	log.Info().Msgf("Target for transfer %s is a media host, sending transfer ready message", transfer.Id.Hex())
 	msg := messaging.TransferReadyMessage{
 		TransferId: transfer.Id.Hex(),
 		// bytes of the zip file
