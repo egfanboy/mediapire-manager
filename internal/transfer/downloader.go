@@ -116,6 +116,7 @@ func (q *downloaderQueue) GetContent(ctx context.Context) ([]byte, error) {
 type mediaDownloader struct{}
 
 func (mediaDownloader) Download(ctx context.Context, transferId primitive.ObjectID, nodeIds []uuid.UUID) ([]byte, error) {
+	log.Info().Msgf("Starting download of content for transfer %s", transferId.Hex())
 	nodes := make([]node.NodeConfig, 0)
 
 	nodeService, err := node.NewNodeService()

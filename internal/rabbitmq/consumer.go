@@ -32,12 +32,12 @@ func initializeConsumers(ctx context.Context, channel *amqp091.Channel) error {
 		log.Debug().Msgf("Setting up consumer for routing key %s", consumer.RoutingKey)
 
 		q, err := env.Channel.QueueDeclare(
-			"",    // name
-			false, // durable
-			false, // delete when unused
-			true,  // exclusive
-			false, // no-wait
-			nil,   // arguments
+			consumer.RoutingKey, // name
+			false,               // durable
+			false,               // delete when unused
+			false,               // exclusive
+			false,               // no-wait
+			nil,                 // arguments
 		)
 		if err != nil {
 			return err

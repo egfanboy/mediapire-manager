@@ -6,6 +6,7 @@ import (
 
 	"github.com/egfanboy/mediapire-common/router"
 	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/egfanboy/mediapire-manager/pkg/types"
 )
 
 const basePath = "/transfers"
@@ -55,6 +56,22 @@ func (c transfersController) GetTransferById() router.RouteBuilder {
 		})
 }
 
+func (c transfersController) CreateTransfer() router.RouteBuilder {
+	return router.NewV1RouteBuilder().
+		SetMethod(http.MethodOptions, http.MethodPost).
+		SetPath(basePath).
+		SetReturnCode(http.StatusAccepted).
+		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
+			var body types.TransferCreateRequest
+			err := p.PopulateBody(&body)
+			if err != nil {
+				return nil, err
+			}
+
+			return c.service.CreateTransfer(request.Context(), body)
+		})
+}
+
 func initController() transfersController {
 	c := transfersController{service: newTransfersService()}
 
@@ -62,6 +79,7 @@ func initController() transfersController {
 		c.builders,
 		c.DownloadTransfer,
 		c.GetTransferById,
+		c.CreateTransfer,
 	)
 
 	return c
