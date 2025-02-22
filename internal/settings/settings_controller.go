@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/egfanboy/mediapire-common/router"
@@ -37,7 +36,7 @@ func (c settingsController) getSettings() router.RouteBuilder {
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: false}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
 			if nodeId, ok := p.Params[queryParamNodeId]; ok {
-				return c.service.GetNodeSettings(request.Context(), uuid.MustParse(nodeId))
+				return c.service.GetNodeSettings(request.Context(), nodeId)
 			} else {
 				return c.service.GetSettings(request.Context())
 			}

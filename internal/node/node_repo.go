@@ -2,28 +2,26 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/egfanboy/mediapire-common/exceptions"
 	"github.com/egfanboy/mediapire-manager/internal/app"
+	"github.com/egfanboy/mediapire-manager/internal/constants"
 	"github.com/egfanboy/mediapire-manager/internal/consul"
-	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 )
 
 func nodeConfigFromConsul(source *api.AgentService, status string) (NodeConfig, error) {
-	nodeId, err := uuid.Parse(source.ID)
-	if err != nil {
-		return NodeConfig{}, err
-	}
 
 	cfg := NodeConfig{
 		NodeHost:   source.Address,
 		NodePort:   strconv.Itoa(source.Port),
 		NodeScheme: source.Meta[consul.KeyScheme],
-		Id:         nodeId,
+		Id:         source.ID,
+		Name:       source.Service,
 	}
 
 	if status == api.HealthCritical {
@@ -37,7 +35,7 @@ func nodeConfigFromConsul(source *api.AgentService, status string) (NodeConfig, 
 
 type NodeRepo interface {
 	GetAllNodes(ctx context.Context) ([]NodeConfig, error)
-	GetNode(ctx context.Context, nodeId uuid.UUID) (NodeConfig, error)
+	GetNode(ctx context.Context, nodeId string) (NodeConfig, error)
 }
 
 type consulRepo struct {
@@ -48,8 +46,7 @@ type consulRepo struct {
 
 func (r *consulRepo) GetAllNodes(ctx context.Context) (result []NodeConfig, err error) {
 	result = make([]NodeConfig, 0)
-	services, err := r.client.Agent().ServicesWithFilter("Service == \"media-host-node\"")
-
+	services, err := r.client.Agent().ServicesWithFilter(fmt.Sprintf("Tags contains \"%s\"", constants.ConsulMediaHostServiceTag))
 	if err != nil {
 		return
 	}
@@ -71,8 +68,8 @@ func (r *consulRepo) GetAllNodes(ctx context.Context) (result []NodeConfig, err 
 	return
 }
 
-func (r *consulRepo) GetNode(ctx context.Context, nodeId uuid.UUID) (NodeConfig, error) {
-	service, _, err := r.client.Agent().Service(nodeId.String(), &api.QueryOptions{UseCache: false})
+func (r *consulRepo) GetNode(ctx context.Context, nodeId string) (NodeConfig, error) {
+	service, _, err := r.client.Agent().Service(nodeId, &api.QueryOptions{UseCache: false})
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return NodeConfig{}, &exceptions.ApiException{

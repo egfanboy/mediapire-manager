@@ -2,7 +2,10 @@ package rabbitmq
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
+	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/rs/zerolog/log"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -23,28 +26,38 @@ var (
 	registry = consumerRegistry{Consumers: []rabbitConsumer{}}
 )
 
+type consummerMapping struct {
+	Mu   sync.Mutex
+	Data map[string]consumerHandler
+}
+
+var cm = &consummerMapping{Mu: sync.Mutex{}, Data: map[string]consumerHandler{}}
+
 func RegisterConsumer(h consumerHandler, routingKey string) {
-	registry.Consumers = append(registry.Consumers, rabbitConsumer{Handler: h, RoutingKey: routingKey})
+	cm.Mu.Lock()
+	defer cm.Mu.Unlock()
+	cm.Data[routingKey] = h
 }
 
 func initializeConsumers(ctx context.Context, channel *amqp091.Channel) error {
-	for _, consumer := range registry.Consumers {
-		log.Debug().Msgf("Setting up consumer for routing key %s", consumer.RoutingKey)
+	q, err := channel.QueueDeclare(
+		fmt.Sprintf("mediapire-manager-%s", app.GetApp().Config.Name), // name
+		true,  // durable
+		false, // delete when unused
+		true,  // exclusive
+		false, // no-wait
+		nil,   // arguments
+	)
+	if err != nil {
+		return err
+	}
 
-		q, err := env.Channel.QueueDeclare(
-			"mediapire-manager", // name
-			true,                // durable
-			false,               // delete when unused
-			false,               // exclusive
-			false,               // no-wait
-			nil,                 // arguments
-		)
-		if err != nil {
-			return err
-		}
-		err = env.Channel.QueueBind(
-			q.Name,              // queue name
-			consumer.RoutingKey, // routing key
+	for routingKey := range cm.Data {
+		log.Debug().Msgf("Setting up consumer for routing key %s", routingKey)
+
+		err = channel.QueueBind(
+			q.Name,     // queue name
+			routingKey, // routing key
 			// TODO: make a constant
 			"mediapire-exch", // exchange
 			false,
@@ -53,28 +66,38 @@ func initializeConsumers(ctx context.Context, channel *amqp091.Channel) error {
 			return err
 		}
 
-		msgs, err := env.Channel.Consume(
-			q.Name, // queue
-			"",     // consumer
-			false,  // auto ack
-			false,  // exclusive
-			false,  // no local
-			false,  // no wait
-			nil,    // args
-		)
-		if err != nil {
-			return err
-		}
-
-		go func(c rabbitConsumer) {
-			for d := range msgs {
-				log.Debug().Msgf("Handling message for routing key %s", c.RoutingKey)
-
-				c.Handler(context.Background(), d)
-			}
-		}(consumer)
-
 	}
+
+	msgs, err := channel.Consume(
+		q.Name, // queue
+		"",     // consumer
+		false,  // auto ack
+		false,  // exclusive
+		false,  // no local
+		false,  // no wait
+		nil,    // args
+	)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for msg := range msgs {
+			msg.Ack(false)
+
+			log.Debug().Msgf("Handling message for routing key %s", msg.RoutingKey)
+
+			cm.Mu.Lock()
+
+			if handler, ok := cm.Data[msg.RoutingKey]; !ok {
+				log.Debug().Msgf("No handler registered for routing key %s. Message acknowledge but no action taken", msg.RoutingKey)
+			} else {
+				go handler(context.Background(), msg)
+			}
+
+			cm.Mu.Unlock()
+		}
+	}()
 
 	return nil
 }

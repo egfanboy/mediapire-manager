@@ -1,12 +1,14 @@
 package consul
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"strconv"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
-	"github.com/google/uuid"
+	"github.com/egfanboy/mediapire-manager/internal/constants"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -54,49 +56,6 @@ func NewConsulClient() error {
 	}
 }
 
-// Finds any service that is registered for this address and port and returns it
-func findServiceForHost(host string, port int) (*api.AgentService, error) {
-	services, err := consulClient.Agent().ServicesWithFilter("Service == \"mediapire-manager\"")
-	if err != nil {
-		return nil, err
-	}
-
-	servicesForHost := make([]*api.AgentService, 0)
-
-	for i := range services {
-		service := services[i]
-
-		h, ok := service.Meta["host"]
-		if !ok {
-			continue
-		}
-
-		p, ok := service.Meta["port"]
-		if !ok {
-			continue
-		}
-
-		metaPort, err := strconv.Atoi(p)
-		if err != nil {
-			continue
-		}
-
-		if h == host && metaPort == port {
-			servicesForHost = append(servicesForHost, service)
-		}
-	}
-
-	if len(servicesForHost) == 0 {
-		return nil, nil
-	}
-
-	if len(servicesForHost) > 1 {
-		return nil, fmt.Errorf("found multiple services for host %s and port %d", host, port)
-	}
-
-	return servicesForHost[0], nil
-}
-
 func findTrafficIp() (net.IP, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
@@ -109,36 +68,31 @@ func findTrafficIp() (net.IP, error) {
 	return localAddr.IP, nil
 }
 
+func generateNodeId(appName string) string {
+	data := fmt.Sprintf("mediapire-manager-%s", appName)
+	hash := sha256.Sum256([]byte(data))
+	hashStr := hex.EncodeToString(hash[:])
+
+	return hashStr[len(hashStr)-12:]
+}
+
 func RegisterService() error {
 	trafficIp, err := findTrafficIp()
 	if err != nil {
 		return err
 	}
 
-	app := app.GetApp()
-	self := app.Config
+	managerApp := app.GetApp()
+	self := managerApp.Config
 
-	service, err := findServiceForHost(trafficIp.String(), self.Port)
-	if err != nil {
-		return err
-	}
-
-	var nodeId uuid.UUID
-
-	if service == nil {
-		nodeId, err = uuid.NewUUID()
-		if err != nil {
-			return err
-		}
-	} else {
-		nodeId = uuid.MustParse(service.ID)
-	}
+	nodeId := generateNodeId(self.Name)
 
 	registration := &api.AgentServiceRegistration{
-		ID:      nodeId.String(),
-		Name:    "mediapire-manager",
+		ID:      nodeId,
+		Name:    self.Name,
 		Port:    self.Port,
 		Address: trafficIp.String(),
+		Tags:    []string{constants.ConsulServiceTag},
 		Check: &api.AgentServiceCheck{
 			HTTP:     fmt.Sprintf("%s://%s:%v/api/v1/health", self.Scheme, trafficIp, self.Port),
 			Interval: "10s",
@@ -156,18 +110,13 @@ func RegisterService() error {
 		return err
 	}
 
-	app.NodeId = nodeId
+	managerApp.NodeId = nodeId
 
 	return nil
 }
 
 func UnregisterService() error {
+	managerApp := app.GetApp()
 
-	trafficIp, err := findTrafficIp()
-
-	if err != nil {
-		return err
-	}
-
-	return consulClient.Agent().ServiceDeregister(fmt.Sprintf("mediapire-manager-%s", trafficIp))
+	return consulClient.Agent().ServiceDeregister(managerApp.NodeId)
 }

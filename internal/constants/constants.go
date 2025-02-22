@@ -1,5 +1,7 @@
 package constants
 
 const (
-	KeyListHosts = "hosts"
+	KeyListHosts              = "hosts"
+	ConsulServiceTag          = "mediapire-manager"
+	ConsulMediaHostServiceTag = "mediapire-media-host"
 )

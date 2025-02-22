@@ -1,3 +1,5 @@
+# Identifier for your manager
+name: my-manager
 scheme: http
 # webserver port
 port: 9898

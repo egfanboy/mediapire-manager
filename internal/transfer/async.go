@@ -13,14 +13,11 @@ import (
 	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"github.com/google/uuid"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
 )
 
 func handleTransferUpdateMessage(ctx context.Context, msg amqp091.Delivery) {
-	msg.Ack(false)
-
 	var updateMsg messaging.TransferUpdateMessage
 
 	log.Info().Msg("Received transfer update message")
@@ -109,7 +106,7 @@ func handleProcessedtransfer(ctx context.Context, transferRecord *Transfer) {
 		return
 	}
 
-	nodeIds := make([]uuid.UUID, 0)
+	nodeIds := make([]string, 0)
 	for k, v := range transferRecord.Outputs {
 		// should not be the case but check for sanity purposes
 		if !v {
@@ -234,8 +231,6 @@ func saveContent(ctx context.Context, transfer *Transfer, content []byte) {
 }
 
 func handleTransferReadyUpdate(ctx context.Context, msg amqp091.Delivery) {
-	msg.Ack(false)
-
 	var updateMsg messaging.TransferReadyUpdateMessage
 
 	err := json.Unmarshal(msg.Body, &updateMsg)
