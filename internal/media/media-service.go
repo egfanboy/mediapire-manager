@@ -11,7 +11,6 @@ import (
 	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
 	"github.com/egfanboy/mediapire-manager/internal/transfer"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	mhApi "github.com/egfanboy/mediapire-media-host/pkg/api"
@@ -19,11 +18,11 @@ import (
 )
 
 type mediaApi interface {
-	GetMedia(ctx context.Context, mediaTypes []string) (map[uuid.UUID][]mhTypes.MediaItem, error)
-	StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error)
+	GetMedia(ctx context.Context, mediaTypes []string) (map[string][]mhTypes.MediaItem, error)
+	StreamMedia(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
-	GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error)
+	GetMediaArt(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
 }
 
 type mediaService struct {
@@ -34,7 +33,7 @@ type mediaService struct {
 func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error) {
 	log.Info().Msg("Starting async downloading")
 
-	inputs := make(map[uuid.UUID][]string)
+	inputs := make(map[string][]string)
 
 	for _, item := range request {
 		if _, ok := inputs[item.NodeId]; ok {
@@ -65,9 +64,9 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 	return t.ToApiResponse(), err
 }
 
-func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string) (result map[uuid.UUID][]mhTypes.MediaItem, err error) {
+func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string) (result map[string][]mhTypes.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
-	result = map[uuid.UUID][]mhTypes.MediaItem{}
+	result = map[string][]mhTypes.MediaItem{}
 
 	nodes, err := s.nodeRepo.GetAllNodes(ctx)
 	if err != nil {
@@ -98,7 +97,7 @@ func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string) (resul
 	return
 }
 
-func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error) {
+func (s *mediaService) StreamMedia(ctx context.Context, nodeId string, mediaId string) ([]byte, error) {
 	log.Info().Msgf("Streaming media %s from node %s", mediaId, nodeId)
 	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 
@@ -120,7 +119,7 @@ func (s *mediaService) StreamMedia(ctx context.Context, nodeId uuid.UUID, mediaI
 func (s *mediaService) DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error {
 	log.Info().Msgf("Start: delete media")
 
-	inputs := make(map[uuid.UUID][]string)
+	inputs := make(map[string][]string)
 
 	for _, item := range request {
 		inputs[item.NodeId] = append(inputs[item.NodeId], item.MediaId)
@@ -138,7 +137,7 @@ func (s *mediaService) DeleteMedia(ctx context.Context, request types.MediaDelet
 	return err
 }
 
-func (s *mediaService) GetMediaArt(ctx context.Context, nodeId uuid.UUID, mediaId string) ([]byte, error) {
+func (s *mediaService) GetMediaArt(ctx context.Context, nodeId string, mediaId string) ([]byte, error) {
 	log.Info().Msgf("Getting art for media %s from node %s", mediaId, nodeId)
 	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 

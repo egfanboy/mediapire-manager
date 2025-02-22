@@ -10,13 +10,12 @@ import (
 	"github.com/egfanboy/mediapire-manager/internal/node"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
 	mhApi "github.com/egfanboy/mediapire-media-host/pkg/api"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
 type settingsApi interface {
 	GetSettings(ctx context.Context) (types.MediaSettings, error)
-	GetNodeSettings(ctx context.Context, nodeId uuid.UUID) (interface{}, error)
+	GetNodeSettings(ctx context.Context, nodeId string) (interface{}, error)
 }
 
 type settingsService struct {
@@ -63,7 +62,7 @@ func (s *settingsService) GetSettings(ctx context.Context) (result types.MediaSe
 	return
 }
 
-func (s *settingsService) GetNodeSettings(ctx context.Context, nodeId uuid.UUID) (result interface{}, err error) {
+func (s *settingsService) GetNodeSettings(ctx context.Context, nodeId string) (result interface{}, err error) {
 	log.Info().Msgf("Getting settings for media host %q", nodeId)
 	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 	if err != nil {

@@ -22,8 +22,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/egfanboy/mediapire-common v0.0.0-20250220152424-aaced2cf3cdc h1:26nL98ESgbwd/vB+2PAorBgAd0YxHHMNDHdDyvlFXp4=
-github.com/egfanboy/mediapire-common v0.0.0-20250220152424-aaced2cf3cdc/go.mod h1:fkbcyi+5inobqkjLF9wtVdDioekNiFixiXgHBi0UEpQ=
+github.com/egfanboy/mediapire-common v0.0.0-20250221235900-73e3c8ad112f h1:vQKhdqQA/GU2baJENfAZBlHm0YgglVMUR2HuEyQnx0o=
+github.com/egfanboy/mediapire-common v0.0.0-20250221235900-73e3c8ad112f/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250220182049-c1b62b45f38d h1:xAjgN/lCW6XrcRtuA4IIQ+USD1K6jjm1sITZUat98lY=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250220182049-c1b62b45f38d/go.mod h1:ETYr0XcsJ6cgRGWhbN9TjBpAKRqMyJlR+SXLMmIkCVQ=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=

@@ -11,7 +11,6 @@ import (
 
 	"github.com/egfanboy/mediapire-manager/internal/node"
 	mhApi "github.com/egfanboy/mediapire-media-host/pkg/api"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -115,7 +114,7 @@ func (q *downloaderQueue) GetContent(ctx context.Context) ([]byte, error) {
 
 type mediaDownloader struct{}
 
-func (mediaDownloader) Download(ctx context.Context, transferId primitive.ObjectID, nodeIds []uuid.UUID) ([]byte, error) {
+func (mediaDownloader) Download(ctx context.Context, transferId primitive.ObjectID, nodeIds []string) ([]byte, error) {
 	log.Info().Msgf("Starting download of content for transfer %s", transferId.Hex())
 	nodes := make([]node.NodeConfig, 0)
 

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/egfanboy/mediapire-common/types"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -20,14 +19,14 @@ const (
 )
 
 type Transfer struct {
-	Id       primitive.ObjectID     `json:"id" bson:"_id,omitempty"`
-	TargetId uuid.UUID              `json:"targetId" bson:"target_id"`
-	Inputs   map[uuid.UUID][]string `json:"inputs" bson:"inputs"`
+	Id       primitive.ObjectID  `json:"id" bson:"_id,omitempty"`
+	TargetId string              `json:"targetId" bson:"target_id"`
+	Inputs   map[string][]string `json:"inputs" bson:"inputs"`
 	// tracks which input has responded
-	Outputs       map[uuid.UUID]bool `json:"-" bson:"outputs"`
-	Status        TransferStatus     `json:"status" bson:"status"`
-	FailureReason string             `json:"failureReason" bson:"failure_reason"`
-	Expiry        time.Time          `json:"expiry" bson:"expiry"`
+	Outputs       map[string]bool `json:"-" bson:"outputs"`
+	Status        TransferStatus  `json:"status" bson:"status"`
+	FailureReason string          `json:"failureReason" bson:"failure_reason"`
+	Expiry        time.Time       `json:"expiry" bson:"expiry"`
 }
 
 func (t *Transfer) ToApiResponse() types.Transfer {
@@ -64,8 +63,8 @@ func (t *Transfer) AllNodesHandled() bool {
 }
 
 // for now don't expose a function that allows to set the expiry
-func newTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]string, expiry *time.Time) *Transfer {
-	outputs := make(map[uuid.UUID]bool)
+func newTransferModel(targetId string, inputs map[string][]string, expiry *time.Time) *Transfer {
+	outputs := make(map[string]bool)
 
 	for k := range inputs {
 		outputs[k] = false
@@ -88,6 +87,6 @@ func newTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]string, expiry 
 	return t
 }
 
-func NewTransferModel(targetId uuid.UUID, inputs map[uuid.UUID][]string) *Transfer {
+func NewTransferModel(targetId string, inputs map[string][]string) *Transfer {
 	return newTransferModel(targetId, inputs, nil)
 }

@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/egfanboy/mediapire-common/router"
-	"github.com/google/uuid"
 
 	"github.com/rs/zerolog/log"
 )
@@ -13,7 +12,7 @@ import (
 type App struct {
 	ControllerRegistry *router.ControllerRegistry
 	Config             config
-	NodeId             uuid.UUID
+	NodeId             string
 }
 
 var a *App

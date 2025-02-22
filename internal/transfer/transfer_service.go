@@ -14,7 +14,6 @@ import (
 	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -140,7 +139,7 @@ func (s *transfersService) CreateTransfer(ctx context.Context, request types.Tra
 		return commonTypes.Transfer{}, err
 	}
 
-	inputs := make(map[uuid.UUID][]string)
+	inputs := make(map[string][]string)
 
 	for _, item := range request.Inputs {
 		if _, ok := inputs[item.NodeId]; ok {

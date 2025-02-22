@@ -3,9 +3,8 @@ module github.com/egfanboy/mediapire-manager
 go 1.18
 
 require (
-	github.com/egfanboy/mediapire-common v0.0.0-20250220152424-aaced2cf3cdc
+	github.com/egfanboy/mediapire-common v0.0.0-20250221235900-73e3c8ad112f
 	github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250220182049-c1b62b45f38d
-	github.com/google/uuid v1.4.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.15.3
 	github.com/rabbitmq/amqp091-go v1.8.1
@@ -19,6 +18,7 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/uuid v1.4.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.3.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect

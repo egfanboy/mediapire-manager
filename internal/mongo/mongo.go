@@ -23,7 +23,7 @@ func InitMongo(ctx context.Context) error {
 	defer cancel()
 
 	var err error
-	mongoClient, err = mongo.Connect(ctx, options.Client().ApplyURI(app.GetApp().Config.MongoURI).SetRegistry(mongoRegistry))
+	mongoClient, err = mongo.Connect(ctx, options.Client().ApplyURI(app.GetApp().Config.MongoURI))
 	if err != nil {
 		return err
 	}

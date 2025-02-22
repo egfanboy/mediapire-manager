@@ -5,10 +5,12 @@ import (
 	"os"
 	"path"
 
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
 
 type config struct {
+	Name   string `yaml:"name"`
 	Port   int    `yaml:"port"`
 	Scheme string `yaml:"scheme"`
 	Consul struct {
@@ -54,7 +56,6 @@ func parseConfig() (config, error) {
 	}
 
 	f, err := os.ReadFile(configPath)
-
 	if err != nil {
 		return conf, err
 	}
@@ -62,6 +63,11 @@ func parseConfig() (config, error) {
 	err = yaml.Unmarshal(f, &conf)
 	if err != nil {
 		return conf, err
+	}
+
+	if conf.Name == "" {
+		log.Error().Msg("Must provide name field in the config file")
+		os.Exit(1)
 	}
 
 	dlPath, err := getDownloadPath()
