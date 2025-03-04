@@ -148,7 +148,7 @@ func (u *baseMediaUpdater) TrackNumber(trackNumber int) BaseUpdater {
 }
 
 func (u *baseMediaUpdater) Art(imagePath string) BaseUpdater {
-	if u.media.Extension == "mp3" {
+	if u.media.Extension != "mp3" {
 		log.Warn().Msgf("Item %s does not support updating the album cover", u.media.Id)
 	} else {
 		u.imagePath = &imagePath

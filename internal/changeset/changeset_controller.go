@@ -2,8 +2,11 @@ package changeset
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/egfanboy/mediapire-common/router"
 	"github.com/egfanboy/mediapire-manager/internal/app"
@@ -81,11 +84,67 @@ func (c changesetController) CreateChangeset() router.RouteBuilder {
 		SetPath(basePath).
 		SetReturnCode(http.StatusAccepted).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			var body types.ChangesetCreateRequest
-			err := p.PopulateBody(&body)
+			err := request.ParseMultipartForm(32 << 20)
 			if err != nil {
 				return nil, err
 			}
+
+			jsonData := request.FormValue("data")
+
+			var body types.ChangesetCreateRequest
+
+			err = json.Unmarshal([]byte(jsonData), &body)
+			if err != nil {
+				return nil, err
+			}
+
+			files := make(map[string]string)
+
+			transformedItems := make([]types.Changeset, len(body.Changes))
+			// Loop over changes and for any change to the art parse the file from the request form
+			for i, item := range body.Changes {
+				if item.Change.Art != "" {
+					// already exists, just overrite the value to the path
+					if tempFilePath, ok := files[item.Change.Art]; ok {
+						item.Change.Art = tempFilePath
+						transformedItems[i] = item
+						continue
+					}
+
+					file, _, err := request.FormFile(item.Change.Art)
+					if err != nil {
+						return nil, err
+					}
+
+					defer file.Close()
+
+					fileContent, err := io.ReadAll(file)
+					if err != nil {
+						return nil, err
+					}
+
+					temp, err := os.CreateTemp("", item.Change.Art)
+					if err != nil {
+						return nil, err
+					}
+
+					_, err = temp.Write(fileContent)
+					if err != nil {
+						return nil, err
+					}
+
+					files[item.Change.Art] = temp.Name()
+					item.Change.Art = temp.Name()
+
+					transformedItems[i] = item
+
+				} else {
+					// nothing to change
+					transformedItems[i] = item
+				}
+			}
+
+			body.Changes = transformedItems
 
 			r, err := c.service.CreateChangeset(request.Context(), body)
 			if err != nil {
