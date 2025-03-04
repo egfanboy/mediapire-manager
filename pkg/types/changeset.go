@@ -9,7 +9,7 @@ type MediaItemChange struct {
 	Comment     string `json:"comment"`
 	Genre       string `json:"genre"`
 	TrackNumber int    `json:"trackNumber"`
-	// Art string `json:""`
+	Art         string `json:"art"`
 }
 
 type Changeset struct {

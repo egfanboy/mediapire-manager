@@ -212,6 +212,10 @@ func (s *mediaService) InternalUpdateMedia(ctx context.Context, changeSetId stri
 			builder.TrackNumber(change.Change.TrackNumber)
 		}
 
+		if change.Change.Art != "" {
+			builder.Art(change.Change.Art)
+		}
+
 		newContent, err := media_update.UpdateMedia(builder)
 		if err != nil {
 			log.Err(err).Msgf("Failed to update media item %s", change.MediaId)
