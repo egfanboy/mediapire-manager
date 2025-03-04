@@ -7,6 +7,7 @@ import (
 	"github.com/egfanboy/mediapire-common/messaging"
 	commonTypes "github.com/egfanboy/mediapire-common/types"
 	"github.com/egfanboy/mediapire-manager/internal/app"
+	media_update "github.com/egfanboy/mediapire-manager/internal/media/update"
 	"github.com/egfanboy/mediapire-manager/internal/node"
 	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
 	"github.com/egfanboy/mediapire-manager/internal/transfer"
@@ -17,12 +18,14 @@ import (
 	mhTypes "github.com/egfanboy/mediapire-media-host/pkg/types"
 )
 
-type mediaApi interface {
+type MediaApi interface {
 	GetMedia(ctx context.Context, mediaTypes []string) (map[string][]mhTypes.MediaItem, error)
 	StreamMedia(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
 	GetMediaArt(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
+	// Used by other internal services, not to be exposed via API
+	InternalUpdateMedia(ctx context.Context, changesetId string, request []types.Changeset) error
 }
 
 type mediaService struct {
@@ -156,7 +159,80 @@ func (s *mediaService) GetMediaArt(ctx context.Context, nodeId string, mediaId s
 	return b, err
 }
 
-func newMediaService() (mediaApi, error) {
+func (s *mediaService) InternalUpdateMedia(ctx context.Context, changeSetId string, changes []types.Changeset) error {
+	log.Info().Msg("Start: Update media")
+	result := messaging.UpdateMediaMessage{ChangesetId: changeSetId, Items: make(map[string][]messaging.UpdatedItem)}
+
+	clients := make(map[string]mhApi.MediaHostApi)
+	var client mhApi.MediaHostApi
+	for _, change := range changes {
+		if cachedClient, ok := clients[change.NodeId]; ok {
+			client = cachedClient
+		} else {
+			node, err := s.nodeRepo.GetNode(ctx, change.NodeId)
+			if err != nil {
+				log.Err(err).Msgf("failed to get node %s", change.NodeId)
+				return err
+			}
+
+			client = mhApi.NewClient(mhTypes.NewHttpHost(node.NodeHost, node.Port()))
+
+			clients[change.NodeId] = client
+		}
+
+		mediaItem, _, err := client.GetMediaByIdWithContent(ctx, change.MediaId)
+		if err != nil {
+			log.Err(err).Msgf("failed to get content for media %s on node %s", change.MediaId, change.NodeId)
+			return err
+		}
+
+		builder := media_update.GetBuilder(mediaItem)
+
+		if change.Change.Title != "" {
+			builder.Title(change.Change.Title)
+		}
+
+		if change.Change.Artist != "" {
+			builder.Title(change.Change.Artist)
+		}
+
+		if change.Change.Album != "" {
+			builder.Title(change.Change.Album)
+		}
+
+		if change.Change.Comment != "" {
+			builder.Title(change.Change.Comment)
+		}
+
+		if change.Change.Genre != "" {
+			builder.Title(change.Change.Genre)
+		}
+
+		if change.Change.TrackNumber != 0 {
+			builder.TrackNumber(change.Change.TrackNumber)
+		}
+
+		newContent, err := media_update.UpdateMedia(builder)
+		if err != nil {
+			log.Err(err).Msgf("Failed to update media item %s", change.MediaId)
+			return err
+		}
+
+		result.Items[change.NodeId] = append(result.Items[change.NodeId], messaging.UpdatedItem{MediaId: change.MediaId, Content: newContent})
+	}
+
+	// send message
+	err := rabbitmq.PublishMessage(ctx, messaging.TopicUpdateMedia, result)
+	if err != nil {
+		log.Err(err).Msgf("Failed to publish message to topic %s", messaging.TopicUpdateMedia)
+		return err
+	}
+
+	log.Info().Msg("End: Update media")
+	return nil
+}
+
+func NewMediaService() (MediaApi, error) {
 	nodeRepo, err := node.NewNodeRepo()
 
 	if err != nil {

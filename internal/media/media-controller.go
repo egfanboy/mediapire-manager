@@ -20,7 +20,7 @@ const (
 
 type mediaController struct {
 	builders []func() router.RouteBuilder
-	service  mediaApi
+	service  MediaApi
 }
 
 func (c mediaController) GetApis() (routes []router.RouteBuilder) {
@@ -106,8 +106,7 @@ func (c mediaController) handleGetArt() router.RouteBuilder {
 }
 
 func initController() (mediaController, error) {
-	mediaService, err := newMediaService()
-
+	mediaService, err := NewMediaService()
 	if err != nil {
 		return mediaController{}, err
 	}

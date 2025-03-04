@@ -15,6 +15,7 @@ import (
 
 	// APIs - start
 
+	_ "github.com/egfanboy/mediapire-manager/internal/changeset"
 	_ "github.com/egfanboy/mediapire-manager/internal/health"
 	_ "github.com/egfanboy/mediapire-manager/internal/media"
 	_ "github.com/egfanboy/mediapire-manager/internal/node"
