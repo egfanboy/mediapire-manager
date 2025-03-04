@@ -3,7 +3,7 @@ module github.com/egfanboy/mediapire-manager
 go 1.18
 
 require (
-	github.com/egfanboy/mediapire-common v0.0.0-20250304013840-abfbad75efae
+	github.com/egfanboy/mediapire-common v0.0.0-20250304134829-17f6625d51dc
 	github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250304014513-89b42671a16f
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.15.3
