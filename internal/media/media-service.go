@@ -2,6 +2,8 @@ package media
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/egfanboy/mediapire-common/messaging"
@@ -11,6 +13,7 @@ import (
 	"github.com/egfanboy/mediapire-manager/internal/node"
 	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
 	"github.com/egfanboy/mediapire-manager/internal/transfer"
+	"github.com/egfanboy/mediapire-manager/internal/utils"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
 	"github.com/rs/zerolog/log"
 
@@ -19,11 +22,12 @@ import (
 )
 
 type MediaApi interface {
-	GetMedia(ctx context.Context, mediaTypes []string) (map[string][]mhTypes.MediaItem, error)
+	GetMediaByNodeId(ctx context.Context, mediaTypes []string, nodeId string) ([]types.MediaItem, error)
 	StreamMedia(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
 	GetMediaArt(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
+	GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) ([]types.MediaItem, error)
 	// Used by other internal services, not to be exposed via API
 	InternalUpdateMedia(ctx context.Context, changesetId string, request []types.Changeset) error
 }
@@ -31,6 +35,7 @@ type MediaApi interface {
 type mediaService struct {
 	nodeRepo     node.NodeRepo
 	transferRepo transfer.TransferRepository
+	repo         mediaRepo
 }
 
 func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error) {
@@ -67,34 +72,40 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 	return t.ToApiResponse(), err
 }
 
-func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string) (result map[string][]mhTypes.MediaItem, err error) {
+func (s *mediaService) GetMediaByNodeId(ctx context.Context, mediaTypes []string, nodeId string) (result []types.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
-	result = map[string][]mhTypes.MediaItem{}
 
-	nodes, err := s.nodeRepo.GetAllNodes(ctx)
+	node, err := s.nodeRepo.GetNode(ctx, nodeId)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get all nodes")
+		log.Error().Err(err).Msgf("Failed to get node %s", nodeId)
 		return
 	}
 
-	for _, node := range nodes {
-		if !node.IsUp {
-			log.Warn().Msgf("Not fetching media from node %s since it is not up.", node.NodeHost)
-			continue
+	if !node.IsUp {
+		msg := fmt.Sprintf("node %s is not up.", node.NodeHost)
+		log.Error().Msg(msg)
+		return nil, errors.New(msg)
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	items, _, err := mhApi.NewClient(node).GetMedia(ctx, &mediaTypes)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get media from node %s", node.NodeHost)
+
+		// do not fail the request if one node is unreachable.
+		return
+	}
+
+	for _, item := range items {
+		convertedItem, err := utils.ConvertStruct[mhTypes.MediaItem, types.MediaItem](item)
+		if err != nil {
+			return nil, err
 		}
 
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-
-		items, _, errMedia := mhApi.NewClient(node).GetMedia(ctx, &mediaTypes)
-		if errMedia != nil {
-			log.Error().Err(errMedia).Msgf("Failed to get media from node %s", node.NodeHost)
-
-			// do not fail the request if one node is unreachable.
-			continue
-		}
-
-		result[node.Id] = items
+		convertedItem.NodeId = node.Id
+		result = append(result, convertedItem)
 	}
 
 	return
@@ -236,6 +247,14 @@ func (s *mediaService) InternalUpdateMedia(ctx context.Context, changeSetId stri
 	return nil
 }
 
+func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) (result []types.MediaItem, err error) {
+	log.Info().Msg("Getting all media from all nodes")
+
+	result, err = s.repo.GetMedia(ctx, getMediaFilter{MediaTypes: mediaTypes, NodeIds: nodeIds})
+
+	return
+}
+
 func NewMediaService() (MediaApi, error) {
 	nodeRepo, err := node.NewNodeRepo()
 
@@ -249,8 +268,14 @@ func NewMediaService() (MediaApi, error) {
 		return nil, err
 	}
 
+	mediaRepo, err := newMediaRepo(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	return &mediaService{
 		nodeRepo:     nodeRepo,
+		repo:         mediaRepo,
 		transferRepo: transferRepo,
 	}, nil
 }

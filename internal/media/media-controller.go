@@ -38,12 +38,12 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 		SetPath(basePath).
 		SetReturnCode(http.StatusOK).
 		AddQueryParam(router.QueryParam{Name: queryParamMediaType, Required: false}).
+		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: false}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			if mediaType, ok := p.Params[queryParamMediaType]; ok {
-				return c.service.GetMedia(request.Context(), strings.Split(mediaType, ","))
-			} else {
-				return c.service.GetMedia(request.Context(), []string{})
-			}
+			mediaType := strings.Split(p.Params[queryParamMediaType], ",")
+			nodeIds := strings.Split(p.Params[queryParamNodeId], ",")
+
+			return c.service.GetMedia(request.Context(), mediaType, nodeIds)
 		})
 }
 
