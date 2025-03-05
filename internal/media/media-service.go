@@ -75,14 +75,26 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 func (s *mediaService) GetMediaByNodeId(ctx context.Context, mediaTypes []string, nodeId string) (result []types.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
 
-	node, err := s.nodeRepo.GetNode(ctx, nodeId)
-	if err != nil {
-		log.Error().Err(err).Msgf("Failed to get node %s", nodeId)
-		return
+	nodeIsUp := false
+	var node node.NodeConfig
+	for i := 0; i < 5; i++ {
+		node, getNodeErr := s.nodeRepo.GetNode(ctx, nodeId)
+		if getNodeErr != nil {
+			log.Error().Err(getNodeErr).Msgf("Failed to get node %s", nodeId)
+			err = getNodeErr
+			return
+		}
+
+		nodeIsUp = node.IsUp
+		if nodeIsUp {
+			break
+		}
+		time.Sleep(1 * time.Second)
 	}
 
-	if !node.IsUp {
-		msg := fmt.Sprintf("node %s is not up.", node.NodeHost)
+	if !nodeIsUp {
+		msg := fmt.Sprintf("node %s is not up.", nodeId)
+
 		log.Error().Msg(msg)
 		return nil, errors.New(msg)
 	}
