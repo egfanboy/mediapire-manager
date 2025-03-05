@@ -26,12 +26,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/disintegration/imaging v1.6.2/go.mod h1:44/5580QXChDfwIclfc/PCwrr44amcmDAg8hxG0Ewe4=
-github.com/egfanboy/mediapire-common v0.0.0-20250304013840-abfbad75efae h1:ZkoRjZqOHGuMqVMEoNt5aLJ4+st2299WPGdhUYD9IrQ=
-github.com/egfanboy/mediapire-common v0.0.0-20250304013840-abfbad75efae/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
-github.com/egfanboy/mediapire-common v0.0.0-20250304134829-17f6625d51dc h1:AUi/ZtQVDifV+PlpexFed4pSuwTkVijyiXGcR2Z9f/c=
-github.com/egfanboy/mediapire-common v0.0.0-20250304134829-17f6625d51dc/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
-github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250220182049-c1b62b45f38d h1:xAjgN/lCW6XrcRtuA4IIQ+USD1K6jjm1sITZUat98lY=
-github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250220182049-c1b62b45f38d/go.mod h1:ETYr0XcsJ6cgRGWhbN9TjBpAKRqMyJlR+SXLMmIkCVQ=
+github.com/egfanboy/mediapire-common v0.0.0-20250305011245-327751234eec h1:Hebom2i93RcOa4EBsA9XekGHXy7D7vEPHckwTDDGuuk=
+github.com/egfanboy/mediapire-common v0.0.0-20250305011245-327751234eec/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250304014513-89b42671a16f h1:/g2tF9o+IVWhUqof6b5MdAUEGTiI3qR1IsNvIITAXrw=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250304014513-89b42671a16f/go.mod h1:ve7zmygXi/qoSerHmiE5BacQT5ZM8D46Qcd4SsEXh4Y=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
@@ -63,8 +59,6 @@ github.com/google/go-cmp v0.5.7/go.mod h1:n+brtR0CgQNWTVd5ZUFpTBC8YFBDLK/h/bpaJ8
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/google/uuid v1.4.0 h1:MtMxsa51/r9yyhkyLsVeVt0B+BGQZzpQiTQ4eHZ8bc4=
-github.com/google/uuid v1.4.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/hashicorp/consul/api v1.15.3 h1:WYONYL2rxTXtlekAqblR2SCdJsizMDIj/uXb5wNy9zU=

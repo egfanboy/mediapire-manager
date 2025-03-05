@@ -44,7 +44,7 @@ func initializeConsumers(ctx context.Context, channel *amqp091.Channel) error {
 		fmt.Sprintf("mediapire-manager-%s", app.GetApp().Config.Name), // name
 		true,  // durable
 		false, // delete when unused
-		true,  // exclusive
+		false, // exclusive
 		false, // no-wait
 		nil,   // arguments
 	)

@@ -3,7 +3,7 @@ module github.com/egfanboy/mediapire-manager
 go 1.18
 
 require (
-	github.com/egfanboy/mediapire-common v0.0.0-20250304134829-17f6625d51dc
+	github.com/egfanboy/mediapire-common v0.0.0-20250305011245-327751234eec
 	github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250304014513-89b42671a16f
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul/api v1.15.3
@@ -20,7 +20,6 @@ require (
 	github.com/aws/aws-sdk-go v1.55.6 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/google/uuid v1.4.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.3.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect

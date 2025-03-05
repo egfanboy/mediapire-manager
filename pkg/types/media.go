@@ -5,5 +5,13 @@ type MediaItemMapping struct {
 	MediaId string `json:"mediaId"`
 }
 
+type MediaItem struct {
+	NodeId    string      `json:"nodeId"`
+	Name      string      `json:"name"`
+	Extension string      `json:"extension"`
+	Id        string      `json:"id"`
+	Metadata  interface{} `json:"metadata"`
+}
+
 type MediaDownloadRequest []MediaItemMapping
 type MediaDeleteRequest []MediaItemMapping
