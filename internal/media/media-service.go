@@ -2,10 +2,10 @@ package media
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/egfanboy/mediapire-common/exceptions"
 	"github.com/egfanboy/mediapire-common/messaging"
 	commonTypes "github.com/egfanboy/mediapire-common/types"
 	"github.com/egfanboy/mediapire-manager/internal/app"
@@ -30,6 +30,7 @@ type MediaApi interface {
 	GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) ([]types.MediaItem, error)
 	// Used by other internal services, not to be exposed via API
 	InternalUpdateMedia(ctx context.Context, changesetId string, request []types.Changeset) error
+	InternalGetAllMediaFromNodes(ctx context.Context, nodeIds []string) ([]types.MediaItem, error)
 }
 
 type mediaService struct {
@@ -72,31 +73,65 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 	return t.ToApiResponse(), err
 }
 
-func (s *mediaService) GetMediaByNodeId(ctx context.Context, mediaTypes []string, nodeId string) (result []types.MediaItem, err error) {
+func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) (result []types.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
 
-	nodeIsUp := false
-	var node node.NodeConfig
-	for i := 0; i < 5; i++ {
-		node, getNodeErr := s.nodeRepo.GetNode(ctx, nodeId)
-		if getNodeErr != nil {
-			log.Error().Err(getNodeErr).Msgf("Failed to get node %s", nodeId)
-			err = getNodeErr
+	nodes, err := s.nodeRepo.GetAllNodes(ctx)
+	if err != nil {
+		return
+	}
+
+	downNodeIds := make([]string, 0)
+
+	for _, node := range nodes {
+		if !node.IsUp {
+			downNodeIds = append(downNodeIds, node.Id)
+		}
+	}
+
+	for _, nodeId := range nodeIds {
+		for _, downId := range downNodeIds {
+			if nodeId == downId {
+				err = exceptions.NewBadRequestException(fmt.Errorf("cannot fetch media for node %s since it is down", nodeId))
+				return
+			}
+		}
+	}
+
+	result, err = s.repo.GetMedia(
+		ctx,
+		getMediaFilter{
+			MediaTypes: mediaTypes,
+			NodeIds:    nodeIds,
+			Exclude:    newExcludeFilter("nodeId", downNodeIds),
+		},
+	)
+
+	return
+}
+
+func (s *mediaService) InternalGetAllMediaFromNodes(ctx context.Context, nodeIds []string) (result []types.MediaItem, err error) {
+	for _, nodeId := range nodeIds {
+		media, getErr := s.GetMediaByNodeId(ctx, []string{}, nodeId)
+		if getErr != nil {
+			err = getErr
 			return
 		}
 
-		nodeIsUp = node.IsUp
-		if nodeIsUp {
-			break
-		}
-		time.Sleep(1 * time.Second)
+		result = append(result, media...)
 	}
 
-	if !nodeIsUp {
-		msg := fmt.Sprintf("node %s is not up.", nodeId)
+	return
+}
 
-		log.Error().Msg(msg)
-		return nil, errors.New(msg)
+func (s *mediaService) GetMediaByNodeId(ctx context.Context, mediaTypes []string, nodeId string) (result []types.MediaItem, err error) {
+	log.Info().Msgf("Getting all media from node %s", nodeId)
+
+	node, err := s.nodeRepo.GetNode(ctx, nodeId)
+	if err != nil {
+		log.Error().Err(err).Msgf("Failed to get node %s", nodeId)
+
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -257,14 +292,6 @@ func (s *mediaService) InternalUpdateMedia(ctx context.Context, changeSetId stri
 
 	log.Info().Msg("End: Update media")
 	return nil
-}
-
-func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) (result []types.MediaItem, err error) {
-	log.Info().Msg("Getting all media from all nodes")
-
-	result, err = s.repo.GetMedia(ctx, getMediaFilter{MediaTypes: mediaTypes, NodeIds: nodeIds})
-
-	return
 }
 
 func NewMediaService() (MediaApi, error) {

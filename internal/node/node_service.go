@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,7 +17,7 @@ func MakeNodeHash(h string) string {
 	return fmt.Sprintf("mediahost:%s", h)
 }
 
-type nodeApi interface {
+type NodeApi interface {
 	GetAllNodes(ctx context.Context) ([]NodeConfig, error)
 }
 
@@ -38,8 +39,7 @@ func (s *nodeService) GetAllNodes(ctx context.Context) ([]NodeConfig, error) {
 	return nodes, nil
 }
 
-func NewNodeService() (nodeApi, error) {
-
+func NewNodeService() (NodeApi, error) {
 	repo, err := NewNodeRepo()
 
 	if err != nil {

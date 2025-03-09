@@ -26,8 +26,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/disintegration/imaging v1.6.2/go.mod h1:44/5580QXChDfwIclfc/PCwrr44amcmDAg8hxG0Ewe4=
-github.com/egfanboy/mediapire-common v0.0.0-20250305011245-327751234eec h1:Hebom2i93RcOa4EBsA9XekGHXy7D7vEPHckwTDDGuuk=
-github.com/egfanboy/mediapire-common v0.0.0-20250305011245-327751234eec/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
+github.com/egfanboy/mediapire-common v0.0.0-20250309025123-c43f48171275 h1:DmVEwXS/9W+on2mSxwb+hQL/r2Haa4NsSsepAFyYU+o=
+github.com/egfanboy/mediapire-common v0.0.0-20250309025123-c43f48171275/go.mod h1:PfxxoHTUvFmiaEvmipwuReMmo8jQqe9mhHtWODuL7OI=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250304014513-89b42671a16f h1:/g2tF9o+IVWhUqof6b5MdAUEGTiI3qR1IsNvIITAXrw=
 github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250304014513-89b42671a16f/go.mod h1:ve7zmygXi/qoSerHmiE5BacQT5ZM8D46Qcd4SsEXh4Y=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=

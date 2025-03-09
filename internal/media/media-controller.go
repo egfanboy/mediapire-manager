@@ -40,10 +40,18 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 		AddQueryParam(router.QueryParam{Name: queryParamMediaType, Required: false}).
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: false}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
-			mediaType := strings.Split(p.Params[queryParamMediaType], ",")
-			nodeIds := strings.Split(p.Params[queryParamNodeId], ",")
+			nodeIds := make([]string, 0)
+			mediaTypes := make([]string, 0)
 
-			return c.service.GetMedia(request.Context(), mediaType, nodeIds)
+			if mediaTypeQuery, ok := p.Params[queryParamMediaType]; ok {
+				mediaTypes = append(mediaTypes, strings.Split(mediaTypeQuery, ",")...)
+			}
+
+			if nodeIdQuery, ok := p.Params[queryParamNodeId]; ok {
+				nodeIds = append(nodeIds, strings.Split(nodeIdQuery, ",")...)
+			}
+
+			return c.service.GetMedia(request.Context(), mediaTypes, nodeIds)
 		})
 }
 
