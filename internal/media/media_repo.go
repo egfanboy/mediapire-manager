@@ -94,20 +94,30 @@ func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]t
 			return result, nil
 		}
 
+		matchesFilters := make([]bool, 0)
+
 		if len(filter.NodeIds) > 0 {
+			matchesAny := false
 			for _, nodeId := range filter.NodeIds {
 				if nodeId == item.NodeId {
-					result = append(result, item)
+					matchesAny = true
+					break
 				}
 			}
+
+			matchesFilters = append(matchesFilters, matchesAny)
 		}
 
 		if len(filter.MediaTypes) > 0 {
+			matchesAny := false
 			for _, mediaType := range filter.MediaTypes {
 				if mediaType == item.Extension {
-					result = append(result, item)
+					matchesAny = true
+					break
 				}
 			}
+
+			matchesFilters = append(matchesFilters, matchesAny)
 		}
 
 		if filter.Exclude != nil {
@@ -120,16 +130,28 @@ func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]t
 			for _, excludedValue := range filter.Exclude.Values {
 				if jsonItem[filter.Exclude.FieldName] == excludedValue {
 					matchesValue = true
-
+					break
 				}
 
 			}
 
-			if !matchesValue {
-				result = append(result, item)
-			}
+			matchesFilters = append(matchesFilters, !matchesValue)
 
 		}
+
+		shouldBeAdded := true
+		for _, matched := range matchesFilters {
+			// did not match one filter, do not include it
+			if !matched {
+				shouldBeAdded = false
+				break
+			}
+		}
+
+		if shouldBeAdded {
+			result = append(result, item)
+		}
+
 	}
 
 	return result, nil
