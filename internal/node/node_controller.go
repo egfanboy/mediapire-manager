@@ -13,7 +13,7 @@ const basePath = "/nodes"
 
 type nodeController struct {
 	builders []func() router.RouteBuilder
-	service  nodeApi
+	service  NodeApi
 }
 
 func (c nodeController) GetApis() (routes []router.RouteBuilder) {

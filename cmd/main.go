@@ -17,12 +17,16 @@ import (
 
 	_ "github.com/egfanboy/mediapire-manager/internal/changeset"
 	_ "github.com/egfanboy/mediapire-manager/internal/health"
-	_ "github.com/egfanboy/mediapire-manager/internal/media"
-	_ "github.com/egfanboy/mediapire-manager/internal/node"
+	"github.com/egfanboy/mediapire-manager/internal/media"
+	"github.com/egfanboy/mediapire-manager/internal/node"
 	_ "github.com/egfanboy/mediapire-manager/internal/settings"
 	_ "github.com/egfanboy/mediapire-manager/internal/transfer"
 
 	// APIs - end
+
+	// messaging - start
+	"github.com/egfanboy/mediapire-manager/internal/node/connectivity"
+	// messaging - end
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog"
@@ -111,6 +115,39 @@ func main() {
 	}()
 
 	addCleanupFunc(func() { srv.Close() })
+
+	nodeService, err := node.NewNodeService()
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		os.Exit(1)
+	}
+
+	nodes, err := nodeService.GetAllNodes(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("")
+		os.Exit(1)
+	}
+
+	for _, node := range nodes {
+		connectivity.WatchNode(node.Name, node.Id)
+	}
+
+	syncService, err := media.NewMediaSyncService(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create sync service")
+		os.Exit(1)
+	}
+
+	err = syncService.SyncFromAllNodes(ctx)
+	if err != nil {
+		// do not exit, just log the error
+		log.Error().Err(err).Msg("failed to sync media from all media host nodes")
+	}
+
+	if err != nil {
+		// do not exit, just log the error
+		log.Error().Err(err).Msg("failed to sync media from all media host nodes")
+	}
 
 	log.Info().Msg("Mediapire Manager running")
 
