@@ -1,7 +1,6 @@
-package types
+package pagination
 
 import (
-	"errors"
 	"fmt"
 	"math"
 
@@ -19,25 +18,15 @@ type PaginatedResponse[T any] struct {
 	Pagination Pagination `json:"pagination"`
 }
 
-func NewPaginatedResponse[T any](data []T, page int, limit int) (result PaginatedResponse[T], err error) {
-	if page < 1 {
-		err = exceptions.NewBadRequestException(errors.New("invalid page parameter. Must be greater than 1"))
-		return
-	}
-
-	if limit > 100 {
-		err = exceptions.NewBadRequestException(errors.New("invalid page limit. Must be 100 or smaller"))
-		return
-	}
-
-	startIndex := (page - 1) * limit
+func NewPaginatedResponse[T any](data []T, pagination ApiPaginationParams) (result PaginatedResponse[T], err error) {
+	startIndex := (pagination.Page - 1) * pagination.Limit
 
 	if len(data)-1 < startIndex {
-		err = exceptions.NewBadRequestException(fmt.Errorf("no page %d for current data", page))
+		err = exceptions.NewBadRequestException(fmt.Errorf("no page %d for current data", pagination.Page))
 		return
 	}
 
-	expectedEndIndex := startIndex + limit
+	expectedEndIndex := startIndex + pagination.Limit
 	endIndex := int(math.Min(float64(expectedEndIndex), float64(len(data)-1)))
 
 	var paginatedData []T
@@ -50,20 +39,20 @@ func NewPaginatedResponse[T any](data []T, page int, limit int) (result Paginate
 	}
 
 	p := Pagination{
-		CurrentPage: page,
+		CurrentPage: pagination.Page,
 	}
 
-	if page == 1 {
+	if pagination.Page == 1 {
 		p.PreviousPage = nil
 	} else {
-		previous := page - 1
+		previous := pagination.Page - 1
 		p.PreviousPage = &previous
 	}
 
 	if expectedEndIndex != endIndex {
 		p.NextPage = nil
 	} else {
-		next := page + 1
+		next := pagination.Page + 1
 		p.NextPage = &next
 	}
 

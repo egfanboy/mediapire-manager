@@ -2,11 +2,11 @@ package media
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
+	"github.com/egfanboy/mediapire-manager/pkg/types/pagination"
 	"github.com/rs/zerolog/log"
 
 	"github.com/egfanboy/mediapire-common/router"
@@ -17,8 +17,8 @@ const (
 	queryParamMediaId   = "mediaId"
 	queryParamNodeId    = "nodeId"
 	queryParamMediaType = "mediaType"
-	queryParamPage      = "page"
-	queryParamLimit     = "limit"
+
+	queryParamSortBy = "sortBy"
 )
 
 type mediaController struct {
@@ -42,8 +42,10 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 		SetReturnCode(http.StatusOK).
 		AddQueryParam(router.QueryParam{Name: queryParamMediaType, Required: false}).
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: false}).
-		AddQueryParam(router.QueryParam{Name: queryParamPage, Required: true}).
-		AddQueryParam(router.QueryParam{Name: queryParamLimit, Required: true}).
+		AddQueryParam(pagination.PageQueryParam).
+		AddQueryParam(pagination.LimitQueryParam).
+		AddQueryParam(types.QueryParamSortBy).
+		AddQueryParam(router.QueryParam{Name: queryParamSortBy, Required: false}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
 			nodeIds := make([]string, 0)
 			mediaTypes := make([]string, 0)
@@ -56,17 +58,17 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 				nodeIds = append(nodeIds, strings.Split(nodeIdQuery, ",")...)
 			}
 
-			page, err := strconv.Atoi(p.Params[queryParamPage])
+			paginationParams, err := pagination.NewApiPaginationParams(p)
 			if err != nil {
 				return nil, err
 			}
 
-			limit, err := strconv.Atoi(p.Params[queryParamLimit])
+			filteringParams, err := types.NewApiFilteringParams(p)
 			if err != nil {
 				return nil, err
 			}
 
-			return c.service.GetMediaPaginated(request.Context(), mediaTypes, nodeIds, page, limit)
+			return c.service.GetMediaPaginated(request.Context(), mediaTypes, nodeIds, filteringParams, paginationParams)
 		})
 }
 
