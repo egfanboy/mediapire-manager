@@ -28,6 +28,12 @@ type MediaApi interface {
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
 	GetMediaArt(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
 	GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) ([]types.MediaItem, error)
+	GetMediaPaginated(
+		ctx context.Context,
+		mediaTypes []string,
+		nodeIds []string,
+		page int,
+		limit int) (types.PaginatedResponse[types.MediaItem], error)
 	// Used by other internal services, not to be exposed via API
 	InternalUpdateMedia(ctx context.Context, changesetId string, request []types.Changeset) error
 	InternalGetAllMediaFromNodes(ctx context.Context, nodeIds []string) ([]types.MediaItem, error)
@@ -294,6 +300,21 @@ func (s *mediaService) InternalUpdateMedia(ctx context.Context, changeSetId stri
 	return nil
 }
 
+func (s *mediaService) GetMediaPaginated(
+	ctx context.Context,
+	mediaTypes []string,
+	nodeIds []string,
+	page int,
+	limit int) (result types.PaginatedResponse[types.MediaItem], err error) {
+	log.Info().Msg("Getting paginated media")
+	media, err := s.repo.GetMedia(ctx, getMediaFilter{NodeIds: nodeIds, MediaTypes: mediaTypes})
+	if err != nil {
+		return
+	}
+
+	result, err = types.NewPaginatedResponse(media, page, limit)
+	return
+}
 func NewMediaService() (MediaApi, error) {
 	nodeRepo, err := node.NewNodeRepo()
 

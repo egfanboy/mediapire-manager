@@ -2,6 +2,7 @@ package media
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/egfanboy/mediapire-manager/internal/app"
@@ -16,6 +17,8 @@ const (
 	queryParamMediaId   = "mediaId"
 	queryParamNodeId    = "nodeId"
 	queryParamMediaType = "mediaType"
+	queryParamPage      = "page"
+	queryParamLimit     = "limit"
 )
 
 type mediaController struct {
@@ -39,6 +42,8 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 		SetReturnCode(http.StatusOK).
 		AddQueryParam(router.QueryParam{Name: queryParamMediaType, Required: false}).
 		AddQueryParam(router.QueryParam{Name: queryParamNodeId, Required: false}).
+		AddQueryParam(router.QueryParam{Name: queryParamPage, Required: true}).
+		AddQueryParam(router.QueryParam{Name: queryParamLimit, Required: true}).
 		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
 			nodeIds := make([]string, 0)
 			mediaTypes := make([]string, 0)
@@ -51,7 +56,17 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 				nodeIds = append(nodeIds, strings.Split(nodeIdQuery, ",")...)
 			}
 
-			return c.service.GetMedia(request.Context(), mediaTypes, nodeIds)
+			page, err := strconv.Atoi(p.Params[queryParamPage])
+			if err != nil {
+				return nil, err
+			}
+
+			limit, err := strconv.Atoi(p.Params[queryParamLimit])
+			if err != nil {
+				return nil, err
+			}
+
+			return c.service.GetMediaPaginated(request.Context(), mediaTypes, nodeIds, page, limit)
 		})
 }
 
