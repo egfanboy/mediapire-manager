@@ -2,6 +2,7 @@ package media
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -35,6 +36,8 @@ type getMediaFilter struct {
 	NodeIds    []string
 	MediaTypes []string
 	Exclude    *excludeFilter
+	SortBy     *string
+	OrderBy    *string
 }
 
 func (f getMediaFilter) IsEmpty() bool {
@@ -51,6 +54,10 @@ func (f getMediaFilter) IsEmpty() bool {
 	}
 
 	if f.Exclude != nil {
+		return false
+	}
+
+	if f.SortBy != nil && f.OrderBy != nil {
 		return false
 	}
 
@@ -72,26 +79,35 @@ func (f deleteManyFilter) IsEmpty() bool {
 type inMemoryRepo struct {
 	mu sync.RWMutex
 
-	mediaItems []types.MediaItem
+	mediaItems []byte
 }
 
 var inMemoryRepoInst = &inMemoryRepo{}
 
 func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]types.MediaItem, error) {
-	result := make([]types.MediaItem, 0)
+	result := make([]map[string]any, 0)
 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	if filter.IsEmpty() {
-		return r.mediaItems, nil
+		var result []types.MediaItem
+		err := json.Unmarshal(r.mediaItems, &result)
+		return result, err
 	}
 
-	for _, item := range r.mediaItems {
-		if filter.Id != nil && item.Id == *filter.Id {
+	var items []map[string]interface{}
+
+	err := json.Unmarshal(r.mediaItems, &items)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range items {
+		if filter.Id != nil && item["id"] == *filter.Id {
 			result = append(result, item)
 
-			return result, nil
+			return utils.ConvertStruct[[]map[string]any, []types.MediaItem](result)
 		}
 
 		matchesFilters := make([]bool, 0)
@@ -99,7 +115,7 @@ func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]t
 		if len(filter.NodeIds) > 0 {
 			matchesAny := false
 			for _, nodeId := range filter.NodeIds {
-				if nodeId == item.NodeId {
+				if nodeId == item["nodeId"] {
 					matchesAny = true
 					break
 				}
@@ -111,7 +127,7 @@ func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]t
 		if len(filter.MediaTypes) > 0 {
 			matchesAny := false
 			for _, mediaType := range filter.MediaTypes {
-				if mediaType == item.Extension {
+				if mediaType == item["extension"] {
 					matchesAny = true
 					break
 				}
@@ -121,14 +137,9 @@ func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]t
 		}
 
 		if filter.Exclude != nil {
-			jsonItem, err := utils.ConvertStruct[types.MediaItem, map[string]interface{}](item)
-			if err != nil {
-				return nil, err
-			}
-
 			matchesValue := false
 			for _, excludedValue := range filter.Exclude.Values {
-				if jsonItem[filter.Exclude.FieldName] == excludedValue {
+				if item[filter.Exclude.FieldName] == excludedValue {
 					matchesValue = true
 					break
 				}
@@ -154,12 +165,24 @@ func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]t
 
 	}
 
-	return result, nil
+	if filter.SortBy != nil {
+		err := sortMedia(result, *filter.SortBy, *filter.OrderBy)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return utils.ConvertStruct[[]map[string]any, []types.MediaItem](result)
 }
 
-func (r *inMemoryRepo) SaveItems(ctx context.Context, items []types.MediaItem) error {
+func (r *inMemoryRepo) SaveItems(ctx context.Context, mediaItems []types.MediaItem) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	items, err := json.Marshal(mediaItems)
+	if err != nil {
+		return err
+	}
 
 	r.mediaItems = items
 
@@ -176,13 +199,25 @@ func (r *inMemoryRepo) DeleteMany(ctx context.Context, filter deleteManyFilter) 
 
 	result := make([]types.MediaItem, 0)
 
-	for _, item := range r.mediaItems {
+	var items []types.MediaItem
+
+	err := json.Unmarshal(r.mediaItems, &items)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range items {
 		if filter.NodeId != nil && item.NodeId != *filter.NodeId {
 			result = append(result, item)
 		}
 	}
 
-	r.mediaItems = result
+	itemsBytes, err := json.Marshal(result)
+	if err != nil {
+		return err
+	}
+
+	r.mediaItems = itemsBytes
 
 	return nil
 }

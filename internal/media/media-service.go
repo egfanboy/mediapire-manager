@@ -15,6 +15,7 @@ import (
 	"github.com/egfanboy/mediapire-manager/internal/transfer"
 	"github.com/egfanboy/mediapire-manager/internal/utils"
 	"github.com/egfanboy/mediapire-manager/pkg/types"
+	"github.com/egfanboy/mediapire-manager/pkg/types/pagination"
 	"github.com/rs/zerolog/log"
 
 	mhApi "github.com/egfanboy/mediapire-media-host/pkg/api"
@@ -32,8 +33,8 @@ type MediaApi interface {
 		ctx context.Context,
 		mediaTypes []string,
 		nodeIds []string,
-		page int,
-		limit int) (types.PaginatedResponse[types.MediaItem], error)
+		filtering types.ApiFilteringParams,
+		pagination pagination.ApiPaginationParams) (pagination.PaginatedResponse[types.MediaItem], error)
 	// Used by other internal services, not to be exposed via API
 	InternalUpdateMedia(ctx context.Context, changesetId string, request []types.Changeset) error
 	InternalGetAllMediaFromNodes(ctx context.Context, nodeIds []string) ([]types.MediaItem, error)
@@ -82,19 +83,10 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) (result []types.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
 
-	nodes, err := s.nodeRepo.GetAllNodes(ctx)
+	downNodeIds, err := s.getUnconnectedNodeIds(ctx)
 	if err != nil {
-		return
+		return nil, err
 	}
-
-	downNodeIds := make([]string, 0)
-
-	for _, node := range nodes {
-		if !node.IsUp {
-			downNodeIds = append(downNodeIds, node.Id)
-		}
-	}
-
 	for _, nodeId := range nodeIds {
 		for _, downId := range downNodeIds {
 			if nodeId == downId {
@@ -304,17 +296,59 @@ func (s *mediaService) GetMediaPaginated(
 	ctx context.Context,
 	mediaTypes []string,
 	nodeIds []string,
-	page int,
-	limit int) (result types.PaginatedResponse[types.MediaItem], err error) {
+	filtering types.ApiFilteringParams,
+	paginationParams pagination.ApiPaginationParams) (result pagination.PaginatedResponse[types.MediaItem], err error) {
 	log.Info().Msg("Getting paginated media")
-	media, err := s.repo.GetMedia(ctx, getMediaFilter{NodeIds: nodeIds, MediaTypes: mediaTypes})
+
+	downNodeIds, err := s.getUnconnectedNodeIds(ctx)
 	if err != nil {
 		return
 	}
 
-	result, err = types.NewPaginatedResponse(media, page, limit)
+	for _, nodeId := range nodeIds {
+		for _, downId := range downNodeIds {
+			if nodeId == downId {
+				err = exceptions.NewBadRequestException(fmt.Errorf("cannot fetch media for node %s since it is down", nodeId))
+				return
+			}
+		}
+	}
+
+	media, err := s.repo.GetMedia(
+		ctx,
+		getMediaFilter{
+			NodeIds:    nodeIds,
+			MediaTypes: mediaTypes,
+			SortBy:     filtering.SortByField,
+			OrderBy:    filtering.SortByOrder,
+			Exclude:    newExcludeFilter("nodeId", downNodeIds),
+		},
+	)
+	if err != nil {
+		return
+	}
+
+	result, err = pagination.NewPaginatedResponse(media, paginationParams)
 	return
 }
+
+func (s *mediaService) getUnconnectedNodeIds(ctx context.Context) ([]string, error) {
+	nodes, err := s.nodeRepo.GetAllNodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	downNodeIds := make([]string, 0)
+
+	for _, node := range nodes {
+		if !node.IsUp {
+			downNodeIds = append(downNodeIds, node.Id)
+		}
+	}
+
+	return downNodeIds, nil
+}
+
 func NewMediaService() (MediaApi, error) {
 	nodeRepo, err := node.NewNodeRepo()
 
