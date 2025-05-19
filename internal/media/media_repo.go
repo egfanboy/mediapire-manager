@@ -38,6 +38,7 @@ type getMediaFilter struct {
 	Exclude    *excludeFilter
 	SortBy     *string
 	OrderBy    *string
+	Ids        []string
 }
 
 func (f getMediaFilter) IsEmpty() bool {
@@ -58,6 +59,10 @@ func (f getMediaFilter) IsEmpty() bool {
 	}
 
 	if f.SortBy != nil && f.OrderBy != nil {
+		return false
+	}
+
+	if len(f.Ids) > 0 {
 		return false
 	}
 
@@ -128,6 +133,19 @@ func (r *inMemoryRepo) GetMedia(ctx context.Context, filter getMediaFilter) ([]t
 			matchesAny := false
 			for _, mediaType := range filter.MediaTypes {
 				if mediaType == item["extension"] {
+					matchesAny = true
+					break
+				}
+			}
+
+			matchesFilters = append(matchesFilters, matchesAny)
+		}
+
+		if len(filter.Ids) > 0 {
+			matchesAny := false
+
+			for _, id := range filter.Ids {
+				if id == item["id"] {
 					matchesAny = true
 					break
 				}

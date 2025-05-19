@@ -15,6 +15,7 @@ import (
 const (
 	basePath            = "/media"
 	queryParamMediaId   = "mediaId"
+	queryParamMediaIds  = "mediaIds"
 	queryParamNodeId    = "nodeId"
 	queryParamMediaType = "mediaType"
 
@@ -69,6 +70,24 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 			}
 
 			return c.service.GetMediaPaginated(request.Context(), mediaTypes, nodeIds, filteringParams, paginationParams)
+		})
+}
+
+// create a second route that will only match /media?mediaIds=1,2 to have it ignore pagination
+func (c mediaController) getAllById() router.RouteBuilder {
+	return router.NewV1RouteBuilder().
+		SetMethod(http.MethodOptions, http.MethodGet).
+		SetPath(basePath).
+		SetReturnCode(http.StatusOK).
+		AddQueryParam(router.QueryParam{Name: queryParamMediaIds, Required: true}).
+		SetHandler(func(request *http.Request, p router.RouteParams) (interface{}, error) {
+			mediaIds := make([]string, 0)
+
+			if mediaIdsQuery, ok := p.Params[queryParamMediaIds]; ok {
+				mediaIds = append(mediaIds, strings.Split(mediaIdsQuery, ",")...)
+			}
+
+			return c.service.GetMedia(request.Context(), []string{}, []string{}, mediaIds)
 		})
 }
 
@@ -138,7 +157,15 @@ func initController() (mediaController, error) {
 
 	c := mediaController{service: mediaService}
 
-	c.builders = append(c.builders, c.handleGetAll, c.StreamMedia, c.DownloadMedia, c.DeleteMedia, c.handleGetArt)
+	c.builders = append(
+		c.builders,
+		c.handleGetAll,
+		c.StreamMedia,
+		c.DownloadMedia,
+		c.DeleteMedia,
+		c.handleGetArt,
+		c.getAllById,
+	)
 
 	return c, nil
 }

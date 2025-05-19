@@ -28,7 +28,7 @@ type MediaApi interface {
 	DownloadMediaAsync(ctx context.Context, request types.MediaDownloadRequest) (commonTypes.Transfer, error)
 	DeleteMedia(ctx context.Context, request types.MediaDeleteRequest) error
 	GetMediaArt(ctx context.Context, nodeId string, mediaId string) ([]byte, error)
-	GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) ([]types.MediaItem, error)
+	GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string, mediaIds []string) ([]types.MediaItem, error)
 	GetMediaPaginated(
 		ctx context.Context,
 		mediaTypes []string,
@@ -80,7 +80,7 @@ func (s *mediaService) DownloadMediaAsync(ctx context.Context, request types.Med
 	return t.ToApiResponse(), err
 }
 
-func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string) (result []types.MediaItem, err error) {
+func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string, nodeIds []string, mediaIds []string) (result []types.MediaItem, err error) {
 	log.Info().Msg("Getting all media from all nodes")
 
 	downNodeIds, err := s.getUnconnectedNodeIds(ctx)
@@ -101,6 +101,7 @@ func (s *mediaService) GetMedia(ctx context.Context, mediaTypes []string, nodeId
 		getMediaFilter{
 			MediaTypes: mediaTypes,
 			NodeIds:    nodeIds,
+			Ids:        mediaIds,
 			Exclude:    newExcludeFilter("nodeId", downNodeIds),
 		},
 	)
