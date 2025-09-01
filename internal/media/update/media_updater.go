@@ -84,12 +84,12 @@ type UpdateBuilder interface {
 type BaseUpdater interface {
 	UpdateBuilder
 
-	Title(title string) BaseUpdater
+	Name(name string) BaseUpdater
 	Album(album string) BaseUpdater
 	Artist(artist string) BaseUpdater
 	Comment(comment string) BaseUpdater
 	Genre(genre string) BaseUpdater
-	TrackNumber(trackNumber int) BaseUpdater
+	Track(track string) BaseUpdater
 	Art(imagePath string) BaseUpdater
 }
 
@@ -107,8 +107,8 @@ type baseMediaUpdater struct {
 	getInputStreamsImpl func(self *baseMediaUpdater) []*ffmpeg_go.Stream
 }
 
-func (u *baseMediaUpdater) Title(title string) BaseUpdater {
-	u.metadata = append(u.metadata, fmt.Sprintf(`title=%s`, title))
+func (u *baseMediaUpdater) Name(name string) BaseUpdater {
+	u.metadata = append(u.metadata, fmt.Sprintf(`title=%s`, name))
 
 	return u
 }
@@ -137,11 +137,11 @@ func (u *baseMediaUpdater) Genre(genre string) BaseUpdater {
 	return u
 }
 
-func (u *baseMediaUpdater) TrackNumber(trackNumber int) BaseUpdater {
-	if u.media.Extension == "mp3" {
-		log.Warn().Msgf("Item %s does not support updating the track number", u.media.Id)
+func (u *baseMediaUpdater) Track(track string) BaseUpdater {
+	if u.media.Extension != "mp3" {
+		log.Warn().Msgf("Item %s does not support updating the track index", u.media.Id)
 	} else {
-		u.metadata = append(u.metadata, fmt.Sprintf("track=%d", trackNumber))
+		u.metadata = append(u.metadata, fmt.Sprintf("track=%s", track))
 	}
 
 	return u

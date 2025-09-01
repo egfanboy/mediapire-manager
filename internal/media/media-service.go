@@ -245,28 +245,38 @@ func (s *mediaService) InternalUpdateMedia(ctx context.Context, changeSetId stri
 
 		builder := media_update.GetBuilder(mediaItem)
 
-		if change.Change.Title != "" {
-			builder.Title(change.Change.Title)
+		if change.Change.Name != "" {
+			builder.Name(change.Change.Name)
 		}
 
 		if change.Change.Artist != "" {
-			builder.Title(change.Change.Artist)
+			builder.Artist(change.Change.Artist)
 		}
 
 		if change.Change.Album != "" {
-			builder.Title(change.Change.Album)
+			builder.Album(change.Change.Album)
 		}
 
 		if change.Change.Comment != "" {
-			builder.Title(change.Change.Comment)
+			builder.Comment(change.Change.Comment)
 		}
 
 		if change.Change.Genre != "" {
-			builder.Title(change.Change.Genre)
+			builder.Genre(change.Change.Genre)
 		}
 
-		if change.Change.TrackNumber != 0 {
-			builder.TrackNumber(change.Change.TrackNumber)
+		if change.Change.TrackIndex != 0 {
+			trackFormat := fmt.Sprintf("%d", change.Change.TrackIndex)
+			if change.Change.TrackOf != 0 {
+				// ffmpeg expects a format of 2/10 to represent track 2 of 10
+				trackFormat = fmt.Sprintf("%s/%d", trackFormat, change.Change.TrackOf)
+				builder.Track(trackFormat)
+			}
+		}
+
+		// if no track of set the track to be empty
+		if change.Change.TrackOf == 0 {
+			builder.Track("")
 		}
 
 		if change.Change.Art != "" {

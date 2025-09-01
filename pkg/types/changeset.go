@@ -3,13 +3,14 @@ package types
 import "time"
 
 type MediaItemChange struct {
-	Title       string `json:"title"`
-	Artist      string `json:"artist"`
-	Album       string `json:"album"`
-	Comment     string `json:"comment"`
-	Genre       string `json:"genre"`
-	TrackNumber int    `json:"trackNumber"`
-	Art         string `json:"art"`
+	Name       string `json:"name"`
+	Artist     string `json:"artist"`
+	Album      string `json:"album"`
+	Comment    string `json:"comment"`
+	Genre      string `json:"genre"`
+	TrackIndex int    `json:"trackIndex"`
+	TrackOf    int    `json:"trackOf"`
+	Art        string `json:"art"`
 }
 
 type Changeset struct {
