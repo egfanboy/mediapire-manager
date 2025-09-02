@@ -62,7 +62,7 @@ func (s *transfersService) Download(ctx context.Context, transferId string) ([]b
 		}
 	}
 
-	if transfer.Expiry.After(time.Now()) {
+	if transfer.Expiry.Before(time.Now()) {
 		err = fmt.Errorf(
 			"cannot download content from transfer %s since it is expired",
 			transferId,
