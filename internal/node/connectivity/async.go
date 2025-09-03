@@ -36,6 +36,27 @@ func handleNodeReadyMessage(ctx context.Context, msg amqp091.Delivery) {
 	}
 }
 
+func handleNodeMediaUpdateMessage(ctx context.Context, msg amqp091.Delivery) {
+	var data messaging.NodeReadyMessage
+
+	err := json.Unmarshal(msg.Body, &data)
+	log.Info().Msgf("Content on node %s changed", data.Id)
+
+	syncService, err := media.NewMediaSyncService(ctx)
+	if err != nil {
+		return
+	}
+
+	// HandleNewNode syncs media from a node.
+	err = syncService.HandleNewNode(ctx, data.Id)
+	if err != nil {
+		log.Err(err).Msgf("Could not sync media from node %s", data.Id)
+		return
+	}
+
+}
+
 func init() {
 	rabbitmq.RegisterConsumer(handleNodeReadyMessage, messaging.TopicNodeReady)
+	rabbitmq.RegisterConsumer(handleNodeMediaUpdateMessage, messaging.TopicNodeMediaChanged)
 }
