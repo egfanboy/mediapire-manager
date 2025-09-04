@@ -34,7 +34,7 @@ type MediaApi interface {
 		mediaTypes []string,
 		nodeIds []string,
 		filtering types.ApiFilteringParams,
-		pagination pagination.ApiPaginationParams) (pagination.PaginatedResponse[types.MediaItem], error)
+		pagination *pagination.ApiPaginationParams) (interface{}, error)
 	// Used by other internal services, not to be exposed via API
 	InternalUpdateMedia(ctx context.Context, changesetId string, request []types.Changeset) error
 	InternalGetAllMediaFromNodes(ctx context.Context, nodeIds []string) ([]types.MediaItem, error)
@@ -308,7 +308,7 @@ func (s *mediaService) GetMediaPaginated(
 	mediaTypes []string,
 	nodeIds []string,
 	filtering types.ApiFilteringParams,
-	paginationParams pagination.ApiPaginationParams) (result pagination.PaginatedResponse[types.MediaItem], err error) {
+	paginationParams *pagination.ApiPaginationParams) (result interface{}, err error) {
 	log.Info().Msg("Getting paginated media")
 
 	downNodeIds, err := s.getUnconnectedNodeIds(ctx)
@@ -339,7 +339,11 @@ func (s *mediaService) GetMediaPaginated(
 		return
 	}
 
-	result, err = pagination.NewPaginatedResponse(media, paginationParams)
+	if paginationParams != nil {
+		result, err = pagination.NewPaginatedResponse(media, *paginationParams)
+	} else {
+		result = types.MediaResponse{Result: media}
+	}
 	return
 }
 
