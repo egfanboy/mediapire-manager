@@ -59,9 +59,15 @@ func (c mediaController) handleGetAll() router.RouteBuilder {
 				nodeIds = append(nodeIds, strings.Split(nodeIdQuery, ",")...)
 			}
 
-			paginationParams, err := pagination.NewApiPaginationParams(p)
-			if err != nil {
-				return nil, err
+			var paginationParams *pagination.ApiPaginationParams
+			if _, ok := p.Params[pagination.PageQueryParam.Name]; ok {
+				pagination, err := pagination.NewApiPaginationParams(p)
+				if err != nil {
+					return nil, err
+				}
+
+				paginationParams = &pagination
+
 			}
 
 			filteringParams, err := types.NewApiFilteringParams(p)

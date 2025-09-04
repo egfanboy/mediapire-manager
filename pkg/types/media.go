@@ -15,3 +15,7 @@ type MediaItem struct {
 
 type MediaDownloadRequest []MediaItemMapping
 type MediaDeleteRequest []MediaItemMapping
+
+type MediaResponse struct {
+	Result []MediaItem `json:"result"`
+}

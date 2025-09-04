@@ -16,7 +16,7 @@ const (
 )
 
 var (
-	PageQueryParam  = router.QueryParam{Name: pageQueryParamName, Required: true}
+	PageQueryParam  = router.QueryParam{Name: pageQueryParamName, Required: false}
 	LimitQueryParam = router.QueryParam{Name: limitQueryParamName, Required: false}
 )
 
