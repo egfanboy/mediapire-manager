@@ -342,7 +342,7 @@ func (s *mediaService) GetMediaPaginated(
 	if paginationParams != nil {
 		result, err = pagination.NewPaginatedResponse(media, *paginationParams)
 	} else {
-		result = types.MediaResponse{Result: media}
+		result = types.MediaResponse{Results: media}
 	}
 	return
 }

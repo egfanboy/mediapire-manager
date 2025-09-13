@@ -17,5 +17,5 @@ type MediaDownloadRequest []MediaItemMapping
 type MediaDeleteRequest []MediaItemMapping
 
 type MediaResponse struct {
-	Result []MediaItem `json:"result"`
+	Results []MediaItem `json:"results"`
 }
