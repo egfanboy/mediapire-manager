@@ -165,12 +165,13 @@ func initController() (mediaController, error) {
 
 	c.builders = append(
 		c.builders,
+		// getAllById needs to go before handleGetAll since gorilla mux uses whatever matches first
+		c.getAllById,
 		c.handleGetAll,
 		c.StreamMedia,
 		c.DownloadMedia,
 		c.DeleteMedia,
 		c.handleGetArt,
-		c.getAllById,
 	)
 
 	return c, nil
