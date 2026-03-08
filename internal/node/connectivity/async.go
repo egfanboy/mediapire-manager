@@ -29,7 +29,7 @@ func handleNodeReadyMessage(ctx context.Context, msg amqp091.Delivery) {
 	// start goroutine watchers for this node
 	WatchNode(nodeMsg.Name, nodeMsg.Id)
 
-	err = syncService.HandleNewNode(ctx, nodeMsg.Id)
+	err = syncService.SyncNodeMedia(ctx, nodeMsg.Id)
 	if err != nil {
 		log.Err(err).Msgf("Could not sync media from node %s", nodeMsg.Id)
 		return
@@ -47,8 +47,8 @@ func handleNodeMediaUpdateMessage(ctx context.Context, msg amqp091.Delivery) {
 		return
 	}
 
-	// HandleNewNode syncs media from a node.
-	err = syncService.HandleNewNode(ctx, data.Id)
+	// SyncNodeMedia syncs media from a node.
+	err = syncService.SyncNodeMedia(ctx, data.Id)
 	if err != nil {
 		log.Err(err).Msgf("Could not sync media from node %s", data.Id)
 		return

@@ -10,7 +10,7 @@ import (
 )
 
 type MediaSync interface {
-	HandleNewNode(ctx context.Context, nodeId string) error
+	SyncNodeMedia(ctx context.Context, nodeId string) error
 	SyncFromAllNodes(ctx context.Context) error
 	HandleRemovedNode(ctx context.Context, nodeId string) error
 }
@@ -21,7 +21,7 @@ type syncService struct {
 	nodeService  node.NodeApi
 }
 
-func (s *syncService) HandleNewNode(ctx context.Context, nodeId string) error {
+func (s *syncService) SyncNodeMedia(ctx context.Context, nodeId string) error {
 	media, err := s.mediaService.GetMediaByNodeId(ctx, []string{}, nodeId)
 	if err != nil {
 		return err

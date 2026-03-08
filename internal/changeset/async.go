@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/egfanboy/mediapire-common/messaging"
+	"github.com/egfanboy/mediapire-manager/internal/media"
 	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/rs/zerolog/log"
@@ -74,6 +75,20 @@ func (u updatedMessageHandler) HandleMessage(ctx context.Context, msg amqp091.De
 		if err != nil {
 			log.Err(err).Msgf("failed to update changeset %s to %s", updateMsg.ChangesetId, StatusComplete)
 			return
+		}
+
+		if changeset.IsDone() {
+			syncService, err := media.NewMediaSyncService(ctx)
+			if err != nil {
+				log.Err(err).Msgf("failed to initialize media sync service for changeset %s", updateMsg.ChangesetId)
+				return
+			}
+
+			err = syncService.SyncNodeMedia(ctx, updateMsg.NodeId)
+			if err != nil {
+				log.Err(err).Msgf("failed to refresh media for node %s after changeset %s", updateMsg.NodeId, updateMsg.ChangesetId)
+				return
+			}
 		}
 	}
 
