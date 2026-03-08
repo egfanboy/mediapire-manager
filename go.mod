@@ -6,6 +6,7 @@ require (
 	github.com/egfanboy/mediapire-common v0.0.0-20250903231047-1ebeb5a7595e
 	github.com/egfanboy/mediapire-media-host v0.0.1-alpha.0.20250304014513-89b42671a16f
 	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/consul/api v1.15.3
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/rs/zerolog v1.27.0

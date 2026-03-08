@@ -97,6 +97,8 @@ func main() {
 		}
 	}
 
+	websocket.RegisterWebSocketHandler(mainRouter, mediaManager.Config.Websocket.AllowedOrigins)
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf("0.0.0.0:%d", mediaManager.Config.Port),
 		WriteTimeout: time.Second * 15,
