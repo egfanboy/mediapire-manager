@@ -3,6 +3,13 @@ name: my-manager
 scheme: http
 # webserver port
 port: 9898
+websocket:
+  # Add exact browser origins that are allowed to open /ws.
+  # Examples:
+  # - http://localhost:8986
+  # - https://app.example.com
+  # If left empty, all origins are accepted (for local development only).
+  allowedOrigins:
 consul:
   scheme: http
   port: 8500

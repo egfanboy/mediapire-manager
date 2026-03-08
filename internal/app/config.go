@@ -10,9 +10,12 @@ import (
 )
 
 type config struct {
-	Name   string `yaml:"name"`
-	Port   int    `yaml:"port"`
-	Scheme string `yaml:"scheme"`
+	Name      string `yaml:"name"`
+	Port      int    `yaml:"port"`
+	Scheme    string `yaml:"scheme"`
+	Websocket struct {
+		AllowedOrigins []string `yaml:"allowedOrigins"`
+	} `yaml:"websocket"`
 	Consul struct {
 		Scheme  string `yaml:"scheme"`
 		Port    int    `yaml:"port"`
