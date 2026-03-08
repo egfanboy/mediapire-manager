@@ -47,6 +47,7 @@ func (c *Changeset) ToApiResponse() types.ChangesetItem {
 	}
 }
 
+// For now there is always just one output but this should be changed if we support multiple
 func (c *Changeset) IsDone() bool {
 	var isDone bool
 	for _, v := range c.Outputs {

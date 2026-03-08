@@ -12,6 +12,7 @@ import (
 	"github.com/egfanboy/mediapire-manager/internal/consul"
 	"github.com/egfanboy/mediapire-manager/internal/mongo"
 	"github.com/egfanboy/mediapire-manager/internal/rabbitmq"
+	"github.com/egfanboy/mediapire-manager/internal/websocket"
 
 	// APIs - start
 
