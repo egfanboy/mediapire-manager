@@ -20,6 +20,7 @@ import (
 	_ "github.com/egfanboy/mediapire-manager/internal/health"
 	"github.com/egfanboy/mediapire-manager/internal/media"
 	"github.com/egfanboy/mediapire-manager/internal/node"
+	_ "github.com/egfanboy/mediapire-manager/internal/playback"
 	_ "github.com/egfanboy/mediapire-manager/internal/settings"
 	_ "github.com/egfanboy/mediapire-manager/internal/transfer"
 
