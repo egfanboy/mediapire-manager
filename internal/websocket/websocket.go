@@ -1,9 +1,11 @@
 package websocket
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
+	"github.com/egfanboy/mediapire-manager/pkg/types"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -11,7 +13,6 @@ import (
 var allowedOrigins = make(map[string]struct{})
 var allowAllOrigins = true
 
-// Upgrader to handle HTTP -> WS upgrade
 var upgrader = websocket.Upgrader{
 	CheckOrigin: checkOrigin,
 }
@@ -21,7 +22,6 @@ type Client struct {
 	send chan []byte
 }
 
-// Hub holds all connected clients
 type Hub struct {
 	clients    map[*Client]bool
 	register   chan *Client
@@ -29,7 +29,6 @@ type Hub struct {
 	broadcast  chan []byte
 }
 
-// Global hub instance
 var hub = Hub{
 	clients:    make(map[*Client]bool),
 	register:   make(chan *Client),
@@ -70,7 +69,6 @@ func (c *Client) readPump() {
 		if err != nil {
 			break
 		}
-		// We ignore client messages here, but you could handle them
 	}
 }
 
@@ -133,4 +131,23 @@ func RegisterWebSocketHandler(router *mux.Router, origins []string) {
 
 func SendMessage(msg []byte) {
 	hub.broadcast <- msg
+}
+
+type playbackSessionUpdatedEnvelope struct {
+	Type  string                     `json:"type"`
+	State types.PlaybackSessionState `json:"state"`
+}
+
+func SendPlaybackSessionUpdated(state types.PlaybackSessionState) error {
+	payload, err := json.Marshal(playbackSessionUpdatedEnvelope{
+		Type:  "playback.session.updated",
+		State: state,
+	})
+	if err != nil {
+		return err
+	}
+
+	SendMessage(payload)
+
+	return nil
 }
